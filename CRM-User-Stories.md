@@ -38,7 +38,7 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
   As a user, I want my session to be kept securely and refreshed or expired properly, so that I stay logged in safely.
   - [x] Protected routes redirect unauthenticated users to login.
 
-- [ ] **US-008 – User profile**
+- [x] **US-008 – User profile**
   As a user, I want to view and edit my profile, so that my details are current.
 
 - [ ] **US-009 – Change password**

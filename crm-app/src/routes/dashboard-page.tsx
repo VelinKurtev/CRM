@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 import { Button } from '@/components/ui/button'
 import { signOut } from '@/features/auth/session'
 import { useAuthStore } from '@/store/auth-store'
@@ -12,9 +14,14 @@ export function DashboardPage() {
       <p className="text-muted-foreground">
         Welcome, {user?.firstName} {user?.lastName} ({user?.role})
       </p>
-      <Button variant="outline" className="mt-4" onClick={() => void signOut()}>
-        Sign out
-      </Button>
+      <div className="mt-4 flex gap-2">
+        <Button asChild variant="outline">
+          <Link to="/profile">My profile</Link>
+        </Button>
+        <Button variant="outline" onClick={() => void signOut()}>
+          Sign out
+        </Button>
+      </div>
     </main>
   )
 }

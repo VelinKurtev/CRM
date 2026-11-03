@@ -8,6 +8,7 @@ import { HttpError } from '../lib/http-error.js'
 import { signToken } from '../lib/jwt.js'
 import { sendMail } from '../lib/mailer.js'
 import { prisma } from '../lib/prisma.js'
+import { publicUser } from '../lib/public-user.js'
 import { endSession, rotateSession, startSession } from '../lib/session.js'
 import { authenticate } from '../middleware/authenticate.js'
 import { validateBody } from '../middleware/validate.js'
@@ -17,20 +18,6 @@ export const authRouter = Router()
 const loginSchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email('Enter a valid email')),
   password: z.string().min(1, 'Password is required'),
-})
-
-const publicUser = (u: {
-  id: string
-  email: string
-  firstName: string
-  lastName: string
-  role: { name: string }
-}) => ({
-  id: u.id,
-  email: u.email,
-  firstName: u.firstName,
-  lastName: u.lastName,
-  role: u.role.name,
 })
 
 // A hash to compare against when the user doesn't exist, so timing doesn't reveal valid emails.

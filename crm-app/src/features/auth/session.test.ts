@@ -4,7 +4,14 @@ import { vi } from 'vitest'
 import { useAuthStore } from '@/store/auth-store'
 import { initAuth, resetAuthInit } from './session'
 
-const user = { id: '1', email: 'a@b.com', firstName: 'A', lastName: 'B', role: 'SALES' as const }
+const user = {
+  id: '1',
+  email: 'a@b.com',
+  firstName: 'A',
+  lastName: 'B',
+  avatarUrl: null,
+  role: 'SALES' as const,
+}
 
 beforeEach(() => {
   resetAuthInit()

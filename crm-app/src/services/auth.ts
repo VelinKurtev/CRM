@@ -25,3 +25,8 @@ export const resetPassword = (token: string, password: string) =>
 export const refreshSession = () => api.post<LoginResponse>('/auth/refresh').then((r) => r.data)
 
 export const logoutRequest = () => api.post('/auth/logout').then(() => undefined)
+
+export type ProfileInput = { firstName: string; lastName: string; avatarUrl: string }
+
+export const updateProfile = (input: ProfileInput) =>
+  api.patch<{ user: AuthUser }>('/users/me', input).then((r) => r.data.user)

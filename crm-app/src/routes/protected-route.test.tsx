@@ -4,7 +4,14 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth-store'
 import { ProtectedRoute } from './protected-route'
 
-const user = { id: '1', email: 'a@b.com', firstName: 'A', lastName: 'B', role: 'SALES' as const }
+const user = {
+  id: '1',
+  email: 'a@b.com',
+  firstName: 'A',
+  lastName: 'B',
+  avatarUrl: null,
+  role: 'SALES' as const,
+}
 
 function renderGuard() {
   const router = createMemoryRouter(

@@ -4,6 +4,12 @@ const messageContent = {
   },
 } as const
 
+const userContent = {
+  'application/json': {
+    schema: { type: 'object', properties: { user: { $ref: '#/components/schemas/User' } } },
+  },
+} as const
+
 /** OpenAPI 3 description of the API. Add new paths here as endpoints are built. */
 export const openapi = {
   openapi: '3.0.3',
@@ -13,7 +19,7 @@ export const openapi = {
     description: 'REST API for the CRM application.',
   },
   servers: [{ url: '/api' }],
-  tags: [{ name: 'System' }, { name: 'Auth' }],
+  tags: [{ name: 'System' }, { name: 'Auth' }, { name: 'Users' }],
   paths: {
     '/health': {
       get: {
@@ -182,6 +188,50 @@ export const openapi = {
         },
       },
     },
+    '/users/me': {
+      get: {
+        tags: ['Users'],
+        summary: 'Get my profile',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: 'My profile', content: userContent },
+          '401': {
+            description: 'Missing, invalid or expired token',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
+          },
+        },
+      },
+      patch: {
+        tags: ['Users'],
+        summary: 'Update my profile',
+        description:
+          'Only the fields sent are changed. Email and role cannot be changed here. An empty avatarUrl removes the avatar.',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  firstName: { type: 'string' },
+                  lastName: { type: 'string' },
+                  avatarUrl: { type: 'string', nullable: true, description: 'http(s) URL' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Updated profile', content: userContent },
+          '400': { $ref: '#/components/responses/ValidationError' },
+          '401': {
+            description: 'Missing, invalid or expired token',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
+          },
+        },
+      },
+    },
     '/auth/me': {
       get: {
         tags: ['Auth'],
@@ -237,6 +287,7 @@ export const openapi = {
           email: { type: 'string', format: 'email' },
           firstName: { type: 'string' },
           lastName: { type: 'string' },
+          avatarUrl: { type: 'string', nullable: true },
           role: { type: 'string', enum: ['ADMIN', 'SALES', 'MANAGER', 'SUPPORT'] },
         },
       },

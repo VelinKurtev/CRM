@@ -5,5 +5,6 @@ export type AuthUser = {
   email: string
   firstName: string
   lastName: string
+  avatarUrl: string | null
   role: Uppercase<Role>
 }

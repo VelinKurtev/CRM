@@ -15,6 +15,7 @@ const user = {
   email: 'a@b.com',
   firstName: 'Ann',
   lastName: 'Lee',
+  avatarUrl: null,
   role: 'SALES' as const,
 }
 

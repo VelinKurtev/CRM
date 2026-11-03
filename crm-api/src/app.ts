@@ -7,6 +7,7 @@ import { config } from './config.js'
 import { openapi } from './openapi.js'
 import { errorHandler, notFound } from './middleware/error-handler.js'
 import { authRouter } from './routes/auth.js'
+import { usersRouter } from './routes/users.js'
 import { healthRouter } from './routes/health.js'
 
 export const app = express()
@@ -17,6 +18,7 @@ app.use(express.json())
 
 app.use('/api', healthRouter)
 app.use('/api', authRouter)
+app.use('/api', usersRouter)
 
 app.get('/api/openapi.json', (_req, res) => {
   res.json(openapi)
