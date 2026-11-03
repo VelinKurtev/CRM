@@ -1,0 +1,24 @@
+# OS / editor
+.DS_Store
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# Dependencies & build output
+node_modules
+dist
+dist-ssr
+coverage
+*.tsbuildinfo
+
+# Environment (keep .env.example)
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Generated
+crm-api/src/generated

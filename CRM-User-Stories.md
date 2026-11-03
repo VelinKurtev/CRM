@@ -11,10 +11,10 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
   - [x] Folder structure follows `app/ components/ features/ hooks/ services/ api/ store/ utils/ types/ assets/ routes/`.
   - [x] Lint, format and test scripts run successfully.
 
-- [ ] **US-002 – Backend and database setup**
+- [x] **US-002 – Backend and database setup**
   As a developer, I want a Node.js (Express/NestJS) API with PostgreSQL and Prisma, so that features can persist data.
-  - [ ] Base entities and migrations exist (Users, Roles, Permissions, Companies, Contacts, Leads, Deals, Activities, Tasks, CalendarEvents, Notes, Documents, Emails, Notifications, Tags, Pipelines, Stages, AuditLogs).
-  - [ ] Health-check endpoint responds.
+  - [x] Base entities and migrations exist (Users, Roles, Permissions, Companies, Contacts, Leads, Deals, Activities, Tasks, CalendarEvents, Notes, Documents, Emails, Notifications, Tags, Pipelines, Stages, AuditLogs).
+  - [x] Health-check endpoint responds.
 
 - [ ] **US-003 – Shared UI component library**
   As a developer, I want reusable UI components (Button, Modal, Table, Card, Form, Input, Select, Date Picker, Avatar, Badge, Tabs, Pagination, Search, Filters, Toast, Skeleton Loader, Empty State), so that screens look and behave consistently.
