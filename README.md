@@ -61,6 +61,23 @@ API tests use their own database, `crm_test`, which is created and migrated auto
 time you run `npm test`, so they never touch your development data. The database name must end in
 `_test`; the test run refuses to start otherwise. Set `TEST_DATABASE_URL` to use a different server.
 
+## Importing contacts
+
+Contacts → **Import CSV** takes a CSV file with a header row (`first_name` and `last_name` are required;
+see the page for the optional columns, or download its template). It checks the file first and shows what
+would be imported and which rows would be skipped and why; nothing is saved until you confirm. Excel's
+semicolon-separated exports work too.
+
+Sample files for trying it, which the API tests also use, are in
+`crm-api/src/test/fixtures/contacts/`:
+
+| File | What it shows |
+| --- | --- |
+| `valid.csv` | Every row imports: quoted cells, a multi-line note, Cyrillic text, blank cells |
+| `with-errors.csv` | Good rows import; bad ones are reported by row (missing name, bad email or link, duplicates, too many tags) |
+| `valid-excel-semicolon.csv` | Excel-style: BOM, `;` separators, Windows line endings, friendly headers |
+| `missing-columns.csv`, `unclosed-quote.csv`, `header-only.csv` | Files that are refused outright |
+
 ## Production notes
 
 - Set a strong `JWT_SECRET`, `NODE_ENV=production`, and `CORS_ORIGIN` / `APP_URL` to the real frontend URL.

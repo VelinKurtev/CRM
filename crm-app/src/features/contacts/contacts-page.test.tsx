@@ -215,6 +215,15 @@ describe('Contacts list', () => {
     expect(await screen.findByText('Alice Adams')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Alice Adams' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /New contact/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Import CSV/ })).not.toBeInTheDocument()
+  })
+
+  it('offers CSV import to people who can create contacts', async () => {
+    renderList()
+    expect(await screen.findByRole('link', { name: /Import CSV/ })).toHaveAttribute(
+      'href',
+      '/contacts/import',
+    )
   })
 
   it('links names to the edit page for people who can edit', async () => {

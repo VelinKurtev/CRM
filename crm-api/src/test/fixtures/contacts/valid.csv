@@ -1,0 +1,8 @@
+first_name,last_name,email,phone,job_title,company,address,city,postal_code,country,linkedin,twitter,facebook,tags,note
+Anna,Ivanova,anna.ivanova@import-test.example,+359 88 111 1111,CTO,Import Test Initech,12 Vitosha Blvd,Sofia,1000,Bulgaria,https://linkedin.com/in/anna,https://x.com/anna,https://facebook.com/anna,import-vip;import-test,Met at the Sofia conference
+Boris,Petrov,boris.petrov@import-test.example,+359 88 222 2222,Designer,IMPORT TEST INITECH,,Plovdiv,,Bulgaria,,,,import-test,"Prefers email.
+Call after 5pm only."
+Иван,Петров,ivan.petrov@import-test.example,,,"Import Test Globex, Inc.",,Варна,,България,,,,"import-vip, import-hot",Говори български
+Carla,Santos,,,,,,,,,,,,,
+Dmitri,Sokolov,dmitri.sokolov@import-test.example,,,,,,,,,,,,
+Elena,Marinova,elena.marinova@import-test.example,,Manager,Import Test Globex Inc,,,,,,,,IMPORT-TEST,

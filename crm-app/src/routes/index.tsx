@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import { AppLayout } from '@/components/layout/app-layout'
 import { ContactsPage } from '@/features/contacts/contacts-page'
+import { ImportContactsPage } from '@/features/contacts/import-contacts-page'
 import { EditContactPage } from '@/features/contacts/edit-contact-page'
 import { NewContactPage } from '@/features/contacts/new-contact-page'
 import { UsersPage } from '@/features/admin/users-page'
@@ -45,6 +46,11 @@ export const routes = [
                         path: 'new',
                         element: <NewContactPage />,
                         handle: { crumb: 'New contact' },
+                      },
+                      {
+                        path: 'import',
+                        element: <ImportContactsPage />,
+                        handle: { crumb: 'Import' },
                       },
                       {
                         path: ':id/edit',

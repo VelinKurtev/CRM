@@ -423,6 +423,47 @@ export const openapi = {
         },
       },
     },
+    '/contacts/import': {
+      post: {
+        tags: ['Records'],
+        summary: 'Import contacts from CSV',
+        description:
+          "Requires `contacts:write`. Send the file contents as `text/csv` (max 2 MB, 2000 rows; comma, semicolon or tab separated; UTF-8). The first row is the header; `first name` and `last name` columns are required, and `email`, `phone`, `job title`, `company`, `address`, `city`, `postal code`, `country`, `linkedin`, `twitter`, `facebook`, `tags` (separated by `;` `,` or `|`) and `note` are optional. Unknown columns are ignored and listed. Rows that fail validation, repeat an email earlier in the file, or match an existing contact's email are skipped and listed under `rejected` with their row number (header = row 1); all other rows are imported, owned by the caller. Contacts without an email cannot be matched, so importing the same file twice adds them again. `dryRun=true` checks everything and saves nothing.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'dryRun', in: 'query', schema: { type: 'boolean', default: false } }],
+        requestBody: {
+          required: true,
+          content: { 'text/csv': { schema: { type: 'string' } } },
+        },
+        responses: {
+          '200': {
+            description: 'Preview (`dryRun`), or nothing valid to import',
+            content: {
+              'application/json': {
+                example: {
+                  dryRun: true,
+                  total: 3,
+                  valid: 2,
+                  imported: 0,
+                  ignoredColumns: ['Internal ID'],
+                  rejected: [
+                    { row: 3, name: 'Gus', errors: { lastName: 'Last name is required' } },
+                  ],
+                },
+              },
+            },
+          },
+          '201': { description: 'Imported; same shape, with `imported` set' },
+          '400': {
+            description:
+              'The file cannot be used at all (not CSV, missing name columns, empty, too many rows)',
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '413': { description: 'File larger than 2 MB' },
+        },
+      },
+    },
     '/contacts/{id}': {
       get: {
         tags: ['Records'],

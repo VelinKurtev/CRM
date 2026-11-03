@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { ArrowDown, ArrowUp, ArrowUpDown, Plus, Users } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, Plus, Upload, Users } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { getErrorMessage } from '@/api/client'
@@ -150,11 +150,18 @@ export function ContactsPage() {
           )}
         </div>
         {canWrite && (
-          <Button asChild>
-            <Link to="/contacts/new">
-              <Plus /> New contact
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline">
+              <Link to="/contacts/import">
+                <Upload /> Import CSV
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link to="/contacts/new">
+                <Plus /> New contact
+              </Link>
+            </Button>
+          </div>
         )}
       </div>
 

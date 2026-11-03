@@ -123,3 +123,28 @@ export const listCompanies = () =>
   api
     .get<{ companies: { id: string; name: string }[] }>('/companies', { params: { limit: 100 } })
     .then((r) => r.data.companies)
+
+export type ImportProblem = {
+  /** Spreadsheet row: the header is row 1. */
+  row: number
+  name: string
+  errors: Record<string, string>
+}
+
+export type ImportResult = {
+  dryRun: boolean
+  total: number
+  valid: number
+  imported: number
+  ignoredColumns: string[]
+  rejected: ImportProblem[]
+}
+
+/** With `dryRun` the server checks the file and saves nothing, for a preview. */
+export const importContacts = (csv: string, dryRun: boolean) =>
+  api
+    .post<ImportResult>('/contacts/import', csv, {
+      params: { dryRun },
+      headers: { 'Content-Type': 'text/csv' },
+    })
+    .then((r) => r.data)

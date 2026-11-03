@@ -4,7 +4,8 @@ import { z } from 'zod'
 import type { Prisma } from '../generated/prisma/client.js'
 import { HttpError } from '../lib/http-error.js'
 import { prisma } from '../lib/prisma.js'
-import { httpUrl, optionalText, requiredText } from '../lib/validation.js'
+import { createContactSchema, optionalEmail, tagsSchema } from '../lib/contact-schemas.js'
+import { httpUrl, requiredText } from '../lib/validation.js'
 import { authenticate } from '../middleware/authenticate.js'
 import { getPermissions, requirePermission } from '../middleware/authorize.js'
 import { parseQuery, validateBody } from '../middleware/validate.js'
@@ -12,29 +13,6 @@ import { parseQuery, validateBody } from '../middleware/validate.js'
 export const contactsRouter = Router()
 
 // ───────── Shared pieces ─────────
-
-const optionalEmail = z.string().trim().toLowerCase().pipe(z.email('Enter a valid email'))
-const tagsSchema = z.array(requiredText('Tag', 50)).max(20, 'At most 20 tags')
-
-const createContactSchema = z.object({
-  firstName: requiredText('First name', 100),
-  lastName: requiredText('Last name', 100),
-  email: optionalEmail.optional(),
-  phone: optionalText(50),
-  jobTitle: optionalText(100),
-  /** Company name: links to an existing company (any letter case) or creates one. */
-  company: optionalText(200),
-  address: optionalText(200),
-  city: optionalText(100),
-  postalCode: optionalText(20),
-  country: optionalText(100),
-  linkedinUrl: httpUrl.optional(),
-  twitterUrl: httpUrl.optional(),
-  facebookUrl: httpUrl.optional(),
-  tags: tagsSchema.optional(),
-  /** Becomes the first note on the contact. */
-  note: z.string().trim().min(1).max(5000).optional(),
-})
 
 /** On update, `null` clears an optional field and leaving it out keeps it as it is. */
 const clearable = <T extends z.ZodType>(schema: T) => schema.nullable().optional()

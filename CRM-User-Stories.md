@@ -80,9 +80,9 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
 - [x] **US-018 – List, search and filter contacts**
   As a user, I want to search and filter contacts in a paginated table, so that I can find people quickly.
 
-- [ ] **US-019 – Import contacts from CSV**
+- [x] **US-019 – Import contacts from CSV**
   As a Sales user, I want to import contacts from a CSV file, so that I can migrate existing data.
-  - [ ] Invalid rows are reported without blocking valid ones.
+  - [x] Invalid rows are reported without blocking valid ones.
 
 - [ ] **US-020 – Export contacts**
   As a Manager, I want to export contacts, so that I can use the data elsewhere.
