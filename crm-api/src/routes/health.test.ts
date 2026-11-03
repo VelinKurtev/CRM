@@ -13,3 +13,15 @@ describe('GET /api/health', () => {
     expect(res.body).toMatchObject({ status: 'ok', database: 'up' })
   })
 })
+
+describe('API docs', () => {
+  it('serves the OpenAPI spec and Swagger UI', async () => {
+    const spec = await request(app).get('/api/openapi.json')
+    expect(spec.status).toBe(200)
+    expect(spec.body.paths['/health']).toBeDefined()
+
+    const ui = await request(app).get('/api/docs/')
+    expect(ui.status).toBe(200)
+    expect(ui.text).toContain('swagger-ui')
+  })
+})
