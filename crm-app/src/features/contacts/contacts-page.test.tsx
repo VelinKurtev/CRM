@@ -7,8 +7,10 @@ import { vi } from 'vitest'
 import { routes } from '@/routes'
 import * as contacts from '@/services/contacts'
 import { useAuthStore } from '@/store/auth-store'
+import { saveBlob } from '@/utils/download'
 
 vi.mock('@/services/contacts')
+vi.mock('@/utils/download')
 
 const user = {
   id: '1',
@@ -238,5 +240,73 @@ describe('Contacts list', () => {
     renderList('/contacts', [])
     expect(screen.getByText('Access denied')).toBeInTheDocument()
     expect(contacts.listContacts).not.toHaveBeenCalled()
+  })
+})
+
+describe('Exporting contacts', () => {
+  const manager = ['contacts:read', 'contacts:write', 'contacts:export']
+
+  it('is offered only to roles that may export', async () => {
+    renderList('/contacts', user.permissions)
+    await screen.findByText('Alice Adams')
+    expect(screen.queryByRole('button', { name: /Export/ })).not.toBeInTheDocument()
+  })
+
+  it('downloads what the current search and filters match, as a file', async () => {
+    vi.mocked(contacts.exportContacts).mockResolvedValue(new Blob(['csv']))
+    renderList('/contacts?q=bob&tag=vip&owner=me&page=2', manager)
+    await screen.findByText('Alice Adams')
+
+    await userEvent.click(screen.getByRole('button', { name: /Export/ }))
+    expect(
+      await screen.findByText(/2 contacts matching your search and filters/),
+    ).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Download CSV' }))
+
+    await waitFor(() => expect(contacts.exportContacts).toHaveBeenCalled())
+    // The whole result, not the page you happen to be on: no page number is sent.
+    expect(contacts.exportContacts).toHaveBeenCalledWith({
+      q: 'bob',
+      tag: 'vip',
+      owner: 'me',
+      company: undefined,
+      delimiter: 'comma',
+    })
+    await waitFor(() =>
+      expect(saveBlob).toHaveBeenCalledWith(
+        expect.any(Blob),
+        expect.stringMatching(/^contacts-\d{4}-\d{2}-\d{2}\.csv$/),
+      ),
+    )
+  })
+
+  it('has a semicolon version for Excel', async () => {
+    vi.mocked(contacts.exportContacts).mockResolvedValue(new Blob(['csv']))
+    renderList('/contacts', manager)
+    await screen.findByText('Alice Adams')
+    await userEvent.click(screen.getByRole('button', { name: /Export/ }))
+    await userEvent.click(await screen.findByRole('button', { name: /for Excel/ }))
+    await waitFor(() =>
+      expect(contacts.exportContacts).toHaveBeenCalledWith(
+        expect.objectContaining({ delimiter: 'semicolon' }),
+      ),
+    )
+  })
+
+  it('shows why an export failed and keeps the menu open', async () => {
+    vi.mocked(contacts.exportContacts).mockRejectedValue(new Error('boom'))
+    renderList('/contacts', manager)
+    await screen.findByText('Alice Adams')
+    await userEvent.click(screen.getByRole('button', { name: /Export/ }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Download CSV' }))
+    expect(await screen.findByText('Could not export contacts')).toBeInTheDocument()
+    expect(saveBlob).not.toHaveBeenCalled()
+  })
+
+  it('is disabled when there is nothing to export', async () => {
+    vi.mocked(contacts.listContacts).mockResolvedValue(page([]))
+    renderList('/contacts', manager)
+    await screen.findByText('No contacts yet')
+    expect(screen.getByRole('button', { name: /Export/ })).toBeDisabled()
   })
 })

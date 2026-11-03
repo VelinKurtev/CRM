@@ -1,3 +1,5 @@
+import axios from 'axios'
+
 import { api } from '@/api/client'
 
 export type NewContact = {
@@ -148,3 +150,25 @@ export const importContacts = (csv: string, dryRun: boolean) =>
       headers: { 'Content-Type': 'text/csv' },
     })
     .then((r) => r.data)
+
+export type ExportParams = Pick<ContactListParams, 'q' | 'company' | 'tag' | 'owner'> & {
+  /** Semicolons suit Excel in many European locales. */
+  delimiter: 'comma' | 'semicolon'
+}
+
+/** Every contact matching the filters (not one page) as a CSV file. Needs `contacts:export`. */
+export const exportContacts = (params: ExportParams) =>
+  api
+    .get<Blob>('/contacts/export', { params, responseType: 'blob' })
+    .then((r) => r.data)
+    .catch(async (error: unknown) => {
+      // An error body arrives as a Blob too; turn it back into JSON so its message can be shown.
+      if (axios.isAxiosError(error) && error.response?.data instanceof Blob) {
+        try {
+          error.response.data = JSON.parse(await error.response.data.text())
+        } catch {
+          /* keep the generic message */
+        }
+      }
+      throw error
+    })

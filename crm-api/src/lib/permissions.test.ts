@@ -30,6 +30,10 @@ describe('role permission matrix', () => {
     expect(ROLE_PERMISSIONS.SALES).toContain('contacts:delete_own')
     expect(ROLE_PERMISSIONS.SALES).not.toContain('contacts:delete')
     expect(ROLE_PERMISSIONS.SUPPORT).not.toContain('contacts:delete_own')
+    // Only managers (and admins) may take contact data out of the system.
+    expect(ROLE_PERMISSIONS.MANAGER).toContain('contacts:export')
+    expect(ROLE_PERMISSIONS.SALES).not.toContain('contacts:export')
+    expect(ROLE_PERMISSIONS.SUPPORT).not.toContain('contacts:export')
     expect(ROLE_PERMISSIONS.SUPPORT).not.toContain('deals:write')
     expect(ROLE_PERMISSIONS.SUPPORT).not.toContain('leads:read')
   })

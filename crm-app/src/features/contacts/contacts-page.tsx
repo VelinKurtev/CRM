@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown, Plus, Upload, Users } from 'lucide-rea
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { getErrorMessage } from '@/api/client'
+import { Can } from '@/components/can'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { DataPagination } from '@/components/ui/data-pagination'
@@ -26,6 +27,7 @@ import {
   type ContactListParams,
   type ContactSort,
 } from '@/services/contacts'
+import { ExportMenu } from './export-menu'
 
 const PAGE_SIZE = 20
 const MAX_TAGS_SHOWN = 3
@@ -149,20 +151,33 @@ export function ContactsPage() {
             </p>
           )}
         </div>
-        {canWrite && (
-          <div className="flex gap-2">
-            <Button asChild variant="outline">
-              <Link to="/contacts/import">
-                <Upload /> Import CSV
-              </Link>
-            </Button>
-            <Button asChild>
-              <Link to="/contacts/new">
-                <Plus /> New contact
-              </Link>
-            </Button>
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2">
+          <Can permission="contacts:export">
+            <ExportMenu
+              filters={{
+                q: params.q || undefined,
+                company: params.company,
+                tag: params.tag,
+                owner: params.owner,
+              }}
+              total={data?.total}
+            />
+          </Can>
+          {canWrite && (
+            <>
+              <Button asChild variant="outline">
+                <Link to="/contacts/import">
+                  <Upload /> Import CSV
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link to="/contacts/new">
+                  <Plus /> New contact
+                </Link>
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

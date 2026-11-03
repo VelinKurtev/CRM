@@ -78,6 +78,14 @@ Sample files for trying it, which the API tests also use, are in
 | `valid-excel-semicolon.csv` | Excel-style: BOM, `;` separators, Windows line endings, friendly headers |
 | `missing-columns.csv`, `unclosed-quote.csv`, `header-only.csv` | Files that are refused outright |
 
+## Exporting contacts
+
+Managers and admins get an **Export** button on the Contacts page. It downloads every contact matching the
+current search and filters (not just the visible page) as a CSV, up to 10,000 at a time. Use the
+"for Excel (semicolons)" option if Excel opens the file as a single column. The columns match the import
+format, so an export can be edited and imported elsewhere. Notes are not included, and every export is
+recorded in the audit log.
+
 ## Production notes
 
 - Set a strong `JWT_SECRET`, `NODE_ENV=production`, and `CORS_ORIGIN` / `APP_URL` to the real frontend URL.

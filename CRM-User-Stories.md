@@ -84,7 +84,7 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
   As a Sales user, I want to import contacts from a CSV file, so that I can migrate existing data.
   - [x] Invalid rows are reported without blocking valid ones.
 
-- [ ] **US-020 – Export contacts**
+- [x] **US-020 – Export contacts**
   As a Manager, I want to export contacts, so that I can use the data elsewhere.
 
 - [ ] **US-021 – Tags**

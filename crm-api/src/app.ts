@@ -11,6 +11,7 @@ import { logger } from './lib/logger.js'
 import { openapi } from './openapi.js'
 import { errorHandler, notFound } from './middleware/error-handler.js'
 import { authRouter } from './routes/auth.js'
+import { contactsExportRouter } from './routes/contacts-export.js'
 import { contactsImportRouter } from './routes/contacts-import.js'
 import { contactsRouter } from './routes/contacts.js'
 import { quickCreateRouter } from './routes/quick-create.js'
@@ -54,6 +55,7 @@ app.use('/api', healthRouter)
 app.use('/api', authRouter)
 app.use('/api', usersRouter)
 app.use('/api', dashboardRouter)
+app.use('/api', contactsExportRouter)
 app.use('/api', contactsImportRouter)
 app.use('/api', contactsRouter)
 app.use('/api', quickCreateRouter)

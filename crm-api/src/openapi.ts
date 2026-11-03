@@ -423,6 +423,36 @@ export const openapi = {
         },
       },
     },
+    '/contacts/export': {
+      get: {
+        tags: ['Records'],
+        summary: 'Export contacts as CSV',
+        description:
+          'Requires `contacts:export` (Manager, Admin). Downloads every contact matching the same `q`, `company`, `tag` and `owner` filters as the list (not just one page) as a UTF-8 CSV with a BOM, using the column names the import understands plus `owner` and `created`. Notes are not included. At most 10,000 contacts per download. Spreadsheet formulas in cells are neutralised. Recorded in the audit log.',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'q', in: 'query', schema: { type: 'string' } },
+          { name: 'company', in: 'query', schema: { type: 'string' }, description: 'Company id' },
+          { name: 'tag', in: 'query', schema: { type: 'string' }, description: 'Tag name' },
+          { name: 'owner', in: 'query', schema: { type: 'string', enum: ['me'] } },
+          {
+            name: 'delimiter',
+            in: 'query',
+            schema: { type: 'string', enum: ['comma', 'semicolon'], default: 'comma' },
+            description: 'Use `semicolon` for Excel in locales that expect it',
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'The file',
+            content: { 'text/csv': { schema: { type: 'string' } } },
+          },
+          '400': { description: 'Invalid query, or more than 10,000 matching contacts' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
     '/contacts/import': {
       post: {
         tags: ['Records'],

@@ -4,6 +4,12 @@ import { z } from 'zod'
 import type { Prisma } from '../generated/prisma/client.js'
 import { HttpError } from '../lib/http-error.js'
 import { prisma } from '../lib/prisma.js'
+import {
+  buildContactWhere,
+  contactFilterSchema,
+  contactOrderBy,
+  contactSortSchema,
+} from '../lib/contact-filters.js'
 import { createContactSchema, optionalEmail, tagsSchema } from '../lib/contact-schemas.js'
 import { httpUrl, requiredText } from '../lib/validation.js'
 import { authenticate } from '../middleware/authenticate.js'
@@ -94,60 +100,21 @@ const idOf = (req: { params: Record<string, string | string[] | undefined> }) =>
 
 // ───────── List, search and filter ─────────
 
-const listQuerySchema = z.object({
-  /** Every word must match the name, email, phone, job title or company name. */
-  q: z.string().trim().max(100).default(''),
-  /** Company id. */
-  company: z.string().trim().min(1).optional(),
-  /** Tag name. */
-  tag: z.string().trim().min(1).optional(),
-  /** `me`: only contacts I own. */
-  owner: z.enum(['me']).optional(),
-  sort: z.enum(['name', 'company', 'createdAt']).default('name'),
-  dir: z.enum(['asc', 'desc']).default('asc'),
+const listQuerySchema = contactFilterSchema.extend(contactSortSchema.shape).extend({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 })
 
 contactsRouter.get('/contacts', requirePermission('contacts:read'), async (req, res) => {
-  const { q, company, tag, owner, sort, dir, page, pageSize } = parseQuery(
-    listQuerySchema,
-    req.query,
-  )
-
-  const contains = (value: string) => ({ contains: value, mode: 'insensitive' as const })
-  const where: Prisma.ContactWhereInput = {
-    // "bob ray" finds Bob Ray: each word may match any field, but all words must match.
-    AND: q
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((word) => ({
-        OR: [
-          { firstName: contains(word) },
-          { lastName: contains(word) },
-          { email: contains(word) },
-          { phone: contains(word) },
-          { jobTitle: contains(word) },
-          { company: { name: contains(word) } },
-        ],
-      })),
-    companyId: company,
-    ownerId: owner === 'me' ? req.auth!.userId : undefined,
-    tags: tag ? { some: { tag: { name: { equals: tag, mode: 'insensitive' } } } } : undefined,
-  }
-
-  const orderBy: Prisma.ContactOrderByWithRelationInput[] =
-    sort === 'name'
-      ? [{ lastName: dir }, { firstName: dir }]
-      : sort === 'company'
-        ? [{ company: { name: dir } }, { lastName: 'asc' }]
-        : [{ createdAt: dir }]
+  const query = parseQuery(listQuerySchema, req.query)
+  const { page, pageSize } = query
+  const where = buildContactWhere(query, req.auth!.userId)
 
   const [total, contacts] = await Promise.all([
     prisma.contact.count({ where }),
     prisma.contact.findMany({
       where,
-      orderBy: [...orderBy, { id: 'asc' }], // a stable order keeps pages from overlapping
+      orderBy: contactOrderBy(query),
       skip: (page - 1) * pageSize,
       take: pageSize,
       select: {
