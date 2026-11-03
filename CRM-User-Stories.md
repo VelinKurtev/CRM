@@ -52,7 +52,7 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
 
 ## Phase 2 – Dashboard & Application Layout
 
-- [ ] **US-011 – App layout**
+- [x] **US-011 – App layout**
   As a user, I want a Sidebar, Top Navbar, Breadcrumbs and Footer, so that I can navigate the CRM easily.
 
 - [ ] **US-012 – Dashboard summary**

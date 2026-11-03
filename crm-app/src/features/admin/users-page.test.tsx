@@ -75,16 +75,16 @@ describe('permission gating', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'))
   })
 
-  it('hides the Manage users link from roles without users:manage', () => {
+  it('hides the Users & roles sidebar link from roles without users:manage', () => {
     useAuthStore.setState({ token: 't', user: sales, initialized: true })
     renderAt('/dashboard')
-    expect(screen.queryByRole('link', { name: 'Manage users' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Users & roles' })).not.toBeInTheDocument()
   })
 
-  it('shows the Manage users link to admins', () => {
+  it('shows the Users & roles sidebar link to admins', () => {
     useAuthStore.setState({ token: 't', user: admin, initialized: true })
     renderAt('/dashboard')
-    expect(screen.getByRole('link', { name: 'Manage users' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Users & roles' })).toBeInTheDocument()
   })
 })
 

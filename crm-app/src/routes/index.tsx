@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 
+import { AppLayout } from '@/components/layout/app-layout'
 import { UsersPage } from '@/features/admin/users-page'
 import { ForgotPasswordPage } from '@/features/auth/forgot-password-page'
 import { LoginPage } from '@/features/auth/login-page'
@@ -21,11 +22,25 @@ export const routes = [
   {
     element: <ProtectedRoute />,
     children: [
-      { path: '/dashboard', element: <DashboardPage /> },
-      { path: '/profile', element: <ProfilePage /> },
       {
-        element: <RequirePermission permission="users:manage" />,
-        children: [{ path: '/admin/users', element: <UsersPage /> }],
+        element: <AppLayout />,
+        children: [
+          { path: '/dashboard', element: <DashboardPage />, handle: { crumb: 'Dashboard' } },
+          { path: '/profile', element: <ProfilePage />, handle: { crumb: 'My profile' } },
+          {
+            element: <RequirePermission permission="users:manage" />,
+            children: [
+              {
+                path: '/admin',
+                handle: { crumb: 'Admin' },
+                children: [
+                  { index: true, element: <Navigate to="/admin/users" replace /> },
+                  { path: 'users', element: <UsersPage />, handle: { crumb: 'Users & roles' } },
+                ],
+              },
+            ],
+          },
+        ],
       },
     ],
   },

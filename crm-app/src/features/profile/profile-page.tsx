@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 
 import { getErrorMessage, getFieldErrors } from '@/api/client'
@@ -56,10 +55,7 @@ export function ProfilePage() {
   })
 
   return (
-    <main className="mx-auto max-w-xl space-y-4 p-8">
-      <Link to="/dashboard" className="text-sm text-muted-foreground underline">
-        ← Back to dashboard
-      </Link>
+    <div className="mx-auto max-w-xl space-y-4">
       <Card>
         <CardHeader className="flex-row items-center gap-4">
           <Avatar className="size-16">
@@ -147,6 +143,6 @@ export function ProfilePage() {
         </CardContent>
       </Card>
       <ChangePasswordCard />
-    </main>
+    </div>
   )
 }

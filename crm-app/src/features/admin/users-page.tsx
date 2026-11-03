@@ -1,6 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 
 import { getErrorMessage } from '@/api/client'
@@ -181,10 +180,7 @@ function RolesTab() {
 
 export function UsersPage() {
   return (
-    <main className="mx-auto max-w-4xl space-y-4 p-8">
-      <Link to="/dashboard" className="text-sm text-muted-foreground underline">
-        ← Back to dashboard
-      </Link>
+    <div className="mx-auto max-w-4xl space-y-4">
       <h1 className="text-2xl font-semibold">Users & roles</h1>
       <Tabs defaultValue="users">
         <TabsList>
@@ -198,6 +194,6 @@ export function UsersPage() {
           <RolesTab />
         </TabsContent>
       </Tabs>
-    </main>
+    </div>
   )
 }
