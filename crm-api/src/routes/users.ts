@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs'
 import { Router } from 'express'
 import { z } from 'zod'
 
+import { audit } from '../lib/audit.js'
 import { HttpError } from '../lib/http-error.js'
 import { signToken } from '../lib/jwt.js'
 import { ROLES } from '../lib/permissions.js'
@@ -91,6 +92,7 @@ usersRouter.post(
       }),
     ])
 
+    await audit({ action: 'PASSWORD_CHANGE', userId: user.id, ip: req.ip })
     await startSession(res, user.id)
     res.json({ token: signToken({ sub: user.id, role: user.role.name }), user: publicUser(user) })
   },

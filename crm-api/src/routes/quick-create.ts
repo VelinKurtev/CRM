@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { z } from 'zod'
 
-import { firstDealStage } from '../lib/default-stage.js'
+import { ensureFirstDealStage } from '../lib/default-pipeline.js'
 import { prisma } from '../lib/prisma.js'
 import { requirePermission } from '../middleware/authorize.js'
 import { validateBody } from '../middleware/validate.js'
@@ -60,7 +60,7 @@ quickCreateRouter.post(
   validateBody(dealSchema),
   async (req, res) => {
     const { expectedClose, ...data } = req.body as z.infer<typeof dealSchema>
-    const stage = await firstDealStage()
+    const stage = await ensureFirstDealStage(prisma)
     const deal = await prisma.deal.create({
       data: {
         ...data,

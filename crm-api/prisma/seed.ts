@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import { PrismaPg } from '@prisma/adapter-pg'
 
 import { PrismaClient } from '../src/generated/prisma/client.js'
+import { ensureFirstDealStage } from '../src/lib/default-pipeline.js'
 import { syncPermissions } from '../src/lib/permissions.js'
 
 const prisma = new PrismaClient({
@@ -26,7 +27,8 @@ async function main() {
       roleId: adminRole.id,
     },
   })
-  console.log(`Seeded roles, permissions and admin user (${email})`)
+  await ensureFirstDealStage(prisma)
+  console.log(`Seeded roles, permissions, default pipeline and admin user (${email})`)
 }
 
 main().finally(() => prisma.$disconnect())

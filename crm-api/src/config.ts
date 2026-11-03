@@ -16,7 +16,11 @@ const env = z
     RESET_TOKEN_TTL_MINUTES: z.coerce.number().default(60),
     REFRESH_TOKEN_TTL_DAYS: z.coerce.number().default(7),
     NODE_ENV: z.string().default('development'),
-    CORS_ORIGIN: z.string().default('http://localhost:5173'),
+    // Credentialed requests: a wildcard origin is not allowed.
+    CORS_ORIGIN: z
+      .string()
+      .default('http://localhost:5173')
+      .refine((v) => v.trim() !== '*', 'CORS_ORIGIN must be the frontend URL, not "*"'),
   })
   .parse(process.env)
 

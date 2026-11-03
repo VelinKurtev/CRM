@@ -1,19 +1,19 @@
-import { prisma } from './prisma.js'
+import type { PrismaClient } from '../generated/prisma/client.js'
 
 /**
  * The stage new deals start in: the first stage of the default pipeline (or of any pipeline).
- * On a fresh database with no pipeline yet, a standard one is created so deals can be added
- * straight away; admins can reshape it later.
+ * If no pipeline exists yet, a standard one is created. Used by the seed and as a safety net
+ * so deals can be added on a database that was never seeded; admins can reshape it later.
  */
-export async function firstDealStage() {
+export async function ensureFirstDealStage(db: PrismaClient) {
   const existing =
-    (await prisma.stage.findFirst({
+    (await db.stage.findFirst({
       where: { pipeline: { isDefault: true } },
       orderBy: { position: 'asc' },
-    })) ?? (await prisma.stage.findFirst({ orderBy: [{ pipelineId: 'asc' }, { position: 'asc' }] }))
+    })) ?? (await db.stage.findFirst({ orderBy: [{ pipelineId: 'asc' }, { position: 'asc' }] }))
   if (existing) return existing
 
-  const pipeline = await prisma.pipeline.create({
+  const pipeline = await db.pipeline.create({
     data: {
       name: 'Sales pipeline',
       isDefault: true,
