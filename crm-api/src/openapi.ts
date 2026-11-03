@@ -19,7 +19,13 @@ export const openapi = {
     description: 'REST API for the CRM application.',
   },
   servers: [{ url: '/api' }],
-  tags: [{ name: 'System' }, { name: 'Auth' }, { name: 'Users' }, { name: 'Dashboard' }],
+  tags: [
+    { name: 'System' },
+    { name: 'Auth' },
+    { name: 'Users' },
+    { name: 'Dashboard' },
+    { name: 'Records' },
+  ],
   paths: {
     '/health': {
       get: {
@@ -338,6 +344,127 @@ export const openapi = {
             },
           },
           '401': { $ref: '#/components/responses/Unauthorized' },
+        },
+      },
+    },
+    '/contacts': {
+      post: {
+        tags: ['Records'],
+        summary: 'Create contact',
+        description: 'Quick-create with the essential fields only. Requires `contacts:write`.',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['firstName', 'lastName'],
+                properties: {
+                  firstName: { type: 'string' },
+                  lastName: { type: 'string' },
+                  email: { type: 'string', format: 'email' },
+                  phone: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Created' },
+          '400': { description: 'Validation failed' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/leads': {
+      post: {
+        tags: ['Records'],
+        summary: 'Create lead',
+        description: 'Quick-create with the essential fields only. Requires `leads:write`.',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['title'],
+                properties: {
+                  title: { type: 'string' },
+                  source: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Created' },
+          '400': { description: 'Validation failed' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/deals': {
+      post: {
+        tags: ['Records'],
+        summary: 'Create deal',
+        description:
+          'Quick-create with the essential fields only. Requires `deals:write`. The deal starts in the first stage of the default pipeline (created on first use if none exists).',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['title'],
+                properties: {
+                  title: { type: 'string' },
+                  amount: { type: 'number', minimum: 0 },
+                  expectedClose: { type: 'string', format: 'date' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Created' },
+          '400': { description: 'Validation failed' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/tasks': {
+      post: {
+        tags: ['Records'],
+        summary: 'Create task',
+        description:
+          'Quick-create with the essential fields only. Requires `tasks:write`. The task is assigned to you; due dates run to the end of that day.',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['title'],
+                properties: {
+                  title: { type: 'string' },
+                  dueDate: { type: 'string', format: 'date' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: 'Created' },
+          '400': { description: 'Validation failed' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
         },
       },
     },

@@ -64,7 +64,7 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
 - [x] **US-014 – Dashboard tasks and activity**
   As a user, I want to see upcoming tasks, recent activities and notifications on the dashboard, so that I know what needs attention.
 
-- [ ] **US-015 – Quick actions**
+- [x] **US-015 – Quick actions**
   As a Sales user, I want quick actions (add contact, lead, deal, task), so that I can create records in one click.
 
 ---
