@@ -48,19 +48,20 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  ownedCompanies Company[]       @relation("CompanyOwner")
-  ownedContacts  Contact[]       @relation("ContactOwner")
-  ownedLeads     Lead[]          @relation("LeadOwner")
-  ownedDeals     Deal[]          @relation("DealOwner")
-  activities     Activity[]
-  assignedTasks  Task[]          @relation("TaskAssignee")
-  createdTasks   Task[]          @relation("TaskCreator")
-  events         CalendarEvent[]
-  notes          Note[]
-  documents      Document[]
-  emails         Email[]
-  notifications  Notification[]
-  auditLogs      AuditLog[]
+  ownedCompanies      Company[]            @relation("CompanyOwner")
+  ownedContacts       Contact[]            @relation("ContactOwner")
+  ownedLeads          Lead[]               @relation("LeadOwner")
+  ownedDeals          Deal[]               @relation("DealOwner")
+  activities          Activity[]
+  assignedTasks       Task[]               @relation("TaskAssignee")
+  createdTasks        Task[]               @relation("TaskCreator")
+  events              CalendarEvent[]
+  notes               Note[]
+  documents           Document[]
+  emails              Email[]
+  notifications       Notification[]
+  auditLogs           AuditLog[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 // ───────── Core CRM ─────────
@@ -394,5 +395,17 @@ model AuditLog {
   createdAt  DateTime @default(now())
 
   @@index([entityType, entityId])
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique // sha256 of the emailed token; the raw token is never stored
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
   @@index([userId])
 }

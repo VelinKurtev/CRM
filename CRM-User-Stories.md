@@ -31,7 +31,7 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
   As a new user, I want to register an account, so that I can be granted access.
   - [x] Form is validated with Zod; duplicate emails are rejected.
 
-- [ ] **US-006 – Forgot / reset password**
+- [x] **US-006 – Forgot / reset password**
   As a user, I want to reset my password via an emailed link, so that I can regain access.
 
 - [ ] **US-007 – JWT session handling**

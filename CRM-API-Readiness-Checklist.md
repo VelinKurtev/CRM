@@ -31,7 +31,7 @@ Legend: 🔴 should exist for Phase 1 to be considered done · 🟡 recommended 
 - [x] 🔴 `authenticate` middleware protects all non-public routes
 - [ ] 🔴 RBAC middleware (`requireRole` / `requirePermission`) enforces Admin, Sales, Manager, Support access
 - [x] 🔴 Registration rejects duplicate emails (409) and validates input with Zod
-- [ ] 🔴 Password reset tokens are single-use and expire
+- [x] 🔴 Password reset tokens are single-use and expire
 - [x] 🟡 Inactive users (`isActive = false`) cannot log in
 - [x] 🟡 Login does not reveal whether the email or the password was wrong
 

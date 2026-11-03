@@ -15,3 +15,9 @@ export type RegisterInput = {
 
 export const register = (input: RegisterInput) =>
   api.post<LoginResponse>('/auth/register', input).then((r) => r.data)
+
+export const forgotPassword = (email: string) =>
+  api.post<{ message: string }>('/auth/forgot-password', { email }).then((r) => r.data)
+
+export const resetPassword = (token: string, password: string) =>
+  api.post<{ message: string }>('/auth/reset-password', { token, password }).then((r) => r.data)

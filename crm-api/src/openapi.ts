@@ -1,3 +1,9 @@
+const messageContent = {
+  'application/json': {
+    schema: { type: 'object', properties: { message: { type: 'string' } } },
+  },
+} as const
+
 /** OpenAPI 3 description of the API. Add new paths here as endpoints are built. */
 export const openapi = {
   openapi: '3.0.3',
@@ -68,6 +74,53 @@ export const openapi = {
             description: 'Email already registered',
             content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
           },
+        },
+      },
+    },
+    '/auth/forgot-password': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Request a password reset email',
+        description:
+          'Always responds 200 with the same message, whether or not the email has an account.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['email'],
+                properties: { email: { type: 'string', format: 'email' } },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Request accepted', content: messageContent },
+          '400': { $ref: '#/components/responses/ValidationError' },
+        },
+      },
+    },
+    '/auth/reset-password': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Set a new password using an emailed token',
+        description: 'Tokens are single-use and expire.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['token', 'password'],
+                properties: { token: { type: 'string' }, password: { type: 'string' } },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Password updated', content: messageContent },
+          '400': { $ref: '#/components/responses/ValidationError' },
         },
       },
     },
