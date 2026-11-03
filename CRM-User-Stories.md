@@ -58,7 +58,7 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
 - [x] **US-012 – Dashboard summary**
   As a user, I want a dashboard showing sales overview, new leads and open deals, so that I see business status at a glance.
 
-- [ ] **US-013 – Dashboard revenue chart**
+- [x] **US-013 – Dashboard revenue chart**
   As a Manager, I want revenue charts on the dashboard, so that I can follow trends.
 
 - [ ] **US-014 – Dashboard tasks and activity**

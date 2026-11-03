@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 
+import { Can } from '@/components/can'
+import { RevenueCard } from '@/features/dashboard/revenue-card'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getDashboardSummary } from '@/services/dashboard'
@@ -105,6 +107,10 @@ export function DashboardPage() {
           )}
         </div>
       )}
+
+      <Can permission="reports:read">
+        <RevenueCard />
+      </Can>
     </div>
   )
 }

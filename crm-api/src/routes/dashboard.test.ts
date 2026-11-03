@@ -11,8 +11,9 @@ const password = 'Secret123!'
 const emails = {
   sales: `dash-sales-${stamp}@crm.local`,
   support: `dash-support-${stamp}@crm.local`,
+  manager: `dash-manager-${stamp}@crm.local`,
 }
-const tokens = { sales: '', support: '' }
+const tokens = { sales: '', support: '', manager: '' }
 let pipelineId = ''
 
 const get = (who: keyof typeof tokens) =>
@@ -25,6 +26,7 @@ beforeAll(async () => {
   for (const [key, role] of [
     ['sales', 'SALES'],
     ['support', 'SUPPORT'],
+    ['manager', 'MANAGER'],
   ] as const) {
     await prisma.user.create({
       data: {
@@ -96,5 +98,54 @@ describe('GET /api/dashboard/summary', () => {
     expect(res.status).toBe(200)
     expect(res.body.newLeads).toBeNull()
     expect(res.body.openDeals).not.toBeNull()
+  })
+})
+
+describe('GET /api/dashboard/revenue', () => {
+  const revenue = (who: keyof typeof tokens) =>
+    request(app).get('/api/dashboard/revenue').set('Authorization', `Bearer ${tokens[who]}`)
+
+  it('is for roles with reports:read only', async () => {
+    expect((await request(app).get('/api/dashboard/revenue')).status).toBe(401)
+    expect((await revenue('sales')).status).toBe(403)
+    expect((await revenue('manager')).status).toBe(200)
+  })
+
+  it('returns 12 months, oldest first, with revenue in the right month', async () => {
+    const stageId = (await prisma.stage.findFirstOrThrow({ where: { pipelineId } })).id
+    const now = new Date()
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 15)
+    const before = (await revenue('manager')).body.months
+    await prisma.deal.createMany({
+      data: [
+        {
+          title: `dash-${stamp}`,
+          amount: 800,
+          status: 'WON',
+          closedAt: lastMonth,
+          pipelineId,
+          stageId,
+        },
+        {
+          title: `dash-${stamp}`,
+          amount: 200,
+          status: 'WON',
+          closedAt: lastMonth,
+          pipelineId,
+          stageId,
+        },
+      ],
+    })
+
+    const { months } = (await revenue('manager')).body
+    expect(months).toHaveLength(12)
+    expect(months.map((m: { month: string }) => m.month)).toEqual(
+      [...months.map((m: { month: string }) => m.month)].sort(),
+    )
+    const key = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`
+    const pick = (list: { month: string; revenue: number; deals: number }[]) =>
+      list.find((m) => m.month === key)!
+    expect(pick(months).revenue - pick(before).revenue).toBe(1000)
+    expect(pick(months).deals - pick(before).deals).toBe(2)
   })
 })

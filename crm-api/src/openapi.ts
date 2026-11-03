@@ -259,6 +259,32 @@ export const openapi = {
         },
       },
     },
+    '/dashboard/revenue': {
+      get: {
+        tags: ['Dashboard'],
+        summary: 'Monthly revenue',
+        description:
+          'Revenue from won deals for each of the last 12 months, oldest first (empty months are 0). Requires `reports:read` (Manager, Admin).',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Twelve monthly buckets',
+            content: {
+              'application/json': {
+                example: {
+                  months: [
+                    { month: '2026-10', revenue: 31000, deals: 4 },
+                    { month: '2026-11', revenue: 42000, deals: 3 },
+                  ],
+                },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
     '/users': {
       get: {
         tags: ['Users'],

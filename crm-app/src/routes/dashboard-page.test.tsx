@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { vi } from 'vitest'
 
@@ -70,5 +71,66 @@ describe('DashboardPage', () => {
     vi.mocked(dashboard.getDashboardSummary).mockRejectedValue(new Error('boom'))
     renderDashboard()
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not load the dashboard')
+  })
+})
+
+describe('Revenue chart', () => {
+  const summary = { sales: null, newLeads: null, openDeals: null }
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    month: `2026-${String(i + 1).padStart(2, '0')}`,
+    revenue: i === 10 ? 42000 : i * 1000,
+    deals: i === 10 ? 3 : 1,
+  }))
+  const manager = { ...user, role: 'MANAGER' as const, permissions: ['reports:read'] }
+
+  it('is hidden from roles without reports:read', async () => {
+    vi.mocked(dashboard.getDashboardSummary).mockResolvedValue(summary)
+    renderDashboard()
+    await screen.findByRole('heading', { name: 'Dashboard' })
+    expect(screen.queryByText('Revenue')).not.toBeInTheDocument()
+    expect(dashboard.getRevenueTrend).not.toHaveBeenCalled()
+  })
+
+  it('shows the trend and reads out a month by keyboard', async () => {
+    useAuthStore.setState({ user: manager })
+    vi.mocked(dashboard.getDashboardSummary).mockResolvedValue(summary)
+    vi.mocked(dashboard.getRevenueTrend).mockResolvedValue(months)
+    renderDashboard()
+
+    const chart = await screen.findByRole('img', { name: /Monthly revenue won, last 12 months/ })
+    expect(chart).toHaveAccessibleName(/Latest month \$11,000/)
+    chart.focus()
+    await userEvent.keyboard('{ArrowLeft}')
+    expect(await screen.findByRole('status')).toHaveTextContent('December 2026')
+    await userEvent.keyboard('{ArrowLeft}{ArrowLeft}')
+    const tip = screen.getByRole('status')
+    expect(tip).toHaveTextContent('October 2026')
+    await userEvent.keyboard('{ArrowRight}')
+    expect(screen.getByRole('status')).toHaveTextContent('November 2026')
+    expect(screen.getByRole('status')).toHaveTextContent('$42,000')
+    expect(screen.getByRole('status')).toHaveTextContent('3 deals won')
+  })
+
+  it('offers the same numbers as a table', async () => {
+    useAuthStore.setState({ user: manager })
+    vi.mocked(dashboard.getDashboardSummary).mockResolvedValue(summary)
+    vi.mocked(dashboard.getRevenueTrend).mockResolvedValue(months)
+    renderDashboard()
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Show table' }))
+    expect(screen.getByRole('cell', { name: 'November 2026' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: '$42,000' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Show chart' }))
+    expect(screen.getByRole('img', { name: /Monthly revenue won/ })).toBeInTheDocument()
+  })
+
+  it('shows an empty state when nothing has been won', async () => {
+    useAuthStore.setState({ user: manager })
+    vi.mocked(dashboard.getDashboardSummary).mockResolvedValue(summary)
+    vi.mocked(dashboard.getRevenueTrend).mockResolvedValue(
+      months.map((m) => ({ ...m, revenue: 0, deals: 0 })),
+    )
+    renderDashboard()
+    expect(await screen.findByText('No revenue yet')).toBeInTheDocument()
   })
 })

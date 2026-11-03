@@ -23,6 +23,8 @@
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --radius: 0.625rem;
+  /* Chart series 1 (blue), validated for the light surface. */
+  --viz-series-1: #2a78d6;
 }
 
 .dark {
@@ -44,6 +46,7 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
+  --viz-series-1: #3987e5;
 }
 
 @theme inline {

@@ -9,3 +9,9 @@ export type DashboardSummary = {
 
 export const getDashboardSummary = () =>
   api.get<DashboardSummary>('/dashboard/summary').then((r) => r.data)
+
+export type RevenueMonth = { month: string; revenue: number; deals: number }
+
+/** Revenue won per month, last 12 months, oldest first. Needs `reports:read`. */
+export const getRevenueTrend = () =>
+  api.get<{ months: RevenueMonth[] }>('/dashboard/revenue').then((r) => r.data.months)
