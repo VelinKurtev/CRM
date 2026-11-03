@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 
+import { Can } from '@/components/can'
 import { Button } from '@/components/ui/button'
 import { signOut } from '@/features/auth/session'
 import { useAuthStore } from '@/store/auth-store'
@@ -18,6 +19,11 @@ export function DashboardPage() {
         <Button asChild variant="outline">
           <Link to="/profile">My profile</Link>
         </Button>
+        <Can permission="users:manage">
+          <Button asChild variant="outline">
+            <Link to="/admin/users">Manage users</Link>
+          </Button>
+        </Can>
         <Button variant="outline" onClick={() => void signOut()}>
           Sign out
         </Button>

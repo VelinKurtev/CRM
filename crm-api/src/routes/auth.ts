@@ -8,7 +8,7 @@ import { HttpError } from '../lib/http-error.js'
 import { signToken } from '../lib/jwt.js'
 import { sendMail } from '../lib/mailer.js'
 import { prisma } from '../lib/prisma.js'
-import { publicUser } from '../lib/public-user.js'
+import { publicUser, userInclude } from '../lib/public-user.js'
 import { endSession, rotateSession, startSession } from '../lib/session.js'
 import { authenticate } from '../middleware/authenticate.js'
 import { passwordSchema } from '../lib/password-schema.js'
@@ -61,7 +61,7 @@ authRouter.post('/auth/register', validateBody(registerSchema), async (req, res)
         passwordHash: await bcrypt.hash(password, 10),
         roleId: role.id,
       },
-      include: { role: true },
+      include: userInclude,
     })
     await startSession(res, user.id)
     res
@@ -76,7 +76,7 @@ authRouter.post('/auth/register', validateBody(registerSchema), async (req, res)
 
 authRouter.post('/auth/login', validateBody(loginSchema), async (req, res) => {
   const { email, password } = req.body as z.infer<typeof loginSchema>
-  const user = await prisma.user.findUnique({ where: { email }, include: { role: true } })
+  const user = await prisma.user.findUnique({ where: { email }, include: userInclude })
 
   const valid = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH)
   if (!user || !valid || !user.isActive) throw new HttpError(401, 'Invalid email or password')
@@ -98,7 +98,7 @@ authRouter.post('/auth/logout', async (req, res) => {
 authRouter.get('/auth/me', authenticate, async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.auth!.userId },
-    include: { role: true },
+    include: userInclude,
   })
   if (!user || !user.isActive) throw new HttpError(401, 'Invalid or expired token')
   res.json({ user: publicUser(user) })

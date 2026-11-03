@@ -18,6 +18,7 @@ const user = {
   firstName: 'Ann',
   lastName: 'Lee',
   avatarUrl: null,
+  permissions: [] as string[],
   role: 'SUPPORT' as const,
 }
 

@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 
+import { UsersPage } from '@/features/admin/users-page'
 import { ForgotPasswordPage } from '@/features/auth/forgot-password-page'
 import { LoginPage } from '@/features/auth/login-page'
 import { ProfilePage } from '@/features/profile/profile-page'
@@ -8,6 +9,7 @@ import { ResetPasswordPage } from '@/features/auth/reset-password-page'
 import { ComponentsPage } from './components-page'
 import { DashboardPage } from './dashboard-page'
 import { ProtectedRoute } from './protected-route'
+import { RequirePermission } from './require-permission'
 
 export const routes = [
   { path: '/', element: <Navigate to="/dashboard" replace /> },
@@ -21,6 +23,10 @@ export const routes = [
     children: [
       { path: '/dashboard', element: <DashboardPage /> },
       { path: '/profile', element: <ProfilePage /> },
+      {
+        element: <RequirePermission permission="users:manage" />,
+        children: [{ path: '/admin/users', element: <UsersPage /> }],
+      },
     ],
   },
 ]

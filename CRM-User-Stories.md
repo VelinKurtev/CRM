@@ -44,9 +44,9 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
 - [x] **US-009 – Change password**
   As a user, I want to change my password, so that I can keep my account secure.
 
-- [ ] **US-010 – Roles & permissions**
+- [x] **US-010 – Roles & permissions**
   As an Admin, I want to assign the roles Admin, Sales, Manager or Support to users, so that each person only sees and does what they are allowed to.
-  - [ ] API and UI enforce permissions per role.
+  - [x] API and UI enforce permissions per role.
 
 ---
 

@@ -6,5 +6,7 @@ export type AuthUser = {
   firstName: string
   lastName: string
   avatarUrl: string | null
+  /** e.g. `contacts:write`. Mirrors the API; the API is what actually enforces access. */
+  permissions: string[]
   role: Uppercase<Role>
 }

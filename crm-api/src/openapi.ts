@@ -232,6 +232,112 @@ export const openapi = {
         },
       },
     },
+    '/users': {
+      get: {
+        tags: ['Users'],
+        summary: 'List users',
+        description: 'Requires the `users:manage` permission (Admin).',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: 'q',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Search name or email',
+          },
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'pageSize', in: 'query', schema: { type: 'integer', default: 20, maximum: 100 } },
+        ],
+        responses: {
+          '200': {
+            description: 'A page of users',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    users: { type: 'array', items: { $ref: '#/components/schemas/User' } },
+                    total: { type: 'integer' },
+                    page: { type: 'integer' },
+                    pageSize: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/users/{id}/role': {
+      patch: {
+        tags: ['Users'],
+        summary: 'Assign a role to a user',
+        description:
+          'Requires `users:manage` (Admin). You cannot change your own role. Takes effect immediately and is written to the audit log.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['role'],
+                properties: {
+                  role: { type: 'string', enum: ['ADMIN', 'MANAGER', 'SALES', 'SUPPORT'] },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Updated user', content: userContent },
+          '400': { $ref: '#/components/responses/ValidationError' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': {
+            description: 'User not found',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
+          },
+        },
+      },
+    },
+    '/roles': {
+      get: {
+        tags: ['Users'],
+        summary: 'List roles and their permissions',
+        description: 'Requires `users:manage` (Admin).',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Roles',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    roles: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          name: { type: 'string' },
+                          permissions: { type: 'array', items: { type: 'string' } },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
     '/users/me/password': {
       post: {
         tags: ['Users'],
@@ -299,6 +405,14 @@ export const openapi = {
       bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
     },
     responses: {
+      Unauthorized: {
+        description: 'Missing, invalid or expired token',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
+      },
+      Forbidden: {
+        description: 'Authenticated, but the role lacks the required permission',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
+      },
       ValidationError: {
         description: 'Validation failed',
         content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
@@ -325,6 +439,11 @@ export const openapi = {
           firstName: { type: 'string' },
           lastName: { type: 'string' },
           avatarUrl: { type: 'string', nullable: true },
+          permissions: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'e.g. contacts:write. Use these to decide what the UI shows.',
+          },
           role: { type: 'string', enum: ['ADMIN', 'SALES', 'MANAGER', 'SUPPORT'] },
         },
       },

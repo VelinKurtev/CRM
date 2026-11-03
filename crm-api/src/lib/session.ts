@@ -3,6 +3,7 @@ import type { CookieOptions, Request, Response } from 'express'
 
 import { config } from '../config.js'
 import { HttpError } from './http-error.js'
+import { userInclude } from './public-user.js'
 import { prisma } from './prisma.js'
 
 export const REFRESH_COOKIE = 'crm_refresh'
@@ -50,7 +51,7 @@ export async function rotateSession(req: Request, res: Response) {
 
   const record = await prisma.refreshToken.findUnique({
     where: { tokenHash: hash(raw) },
-    include: { user: { include: { role: true } } },
+    include: { user: { include: userInclude } },
   })
   if (!record || record.expiresAt < new Date() || !record.user.isActive) throw fail()
 

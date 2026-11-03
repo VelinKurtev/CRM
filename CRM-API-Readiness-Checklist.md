@@ -29,7 +29,7 @@ Legend: 🔴 should exist for Phase 1 to be considered done · 🟡 recommended 
 - [x] 🔴 JWT signed with a secret from env; access-token expiry configured
 - [x] 🔴 Refresh-token or session strategy implemented per US-007
 - [x] 🔴 `authenticate` middleware protects all non-public routes
-- [ ] 🔴 RBAC middleware (`requireRole` / `requirePermission`) enforces Admin, Sales, Manager, Support access
+- [x] 🔴 RBAC middleware (`requireRole` / `requirePermission`) enforces Admin, Sales, Manager, Support access
 - [x] 🔴 Registration rejects duplicate emails (409) and validates input with Zod
 - [x] 🔴 Password reset tokens are single-use and expire
 - [x] 🟡 Inactive users (`isActive = false`) cannot log in
