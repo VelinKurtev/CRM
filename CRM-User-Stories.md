@@ -1,0 +1,268 @@
+# CRM User Stories
+
+Stories are numbered consecutively (US-001 …) and ordered by the recommended development roadmap. Each story should be built after the ones before it. Roles: **Admin**, **Sales**, **Manager**, **Support**.
+
+---
+
+## Phase 0 – Project Foundation
+
+**US-001 – Project setup**
+As a developer, I want a React 19 + TypeScript + Vite project with React Router, TanStack Query, Zustand, React Hook Form, Zod, Tailwind CSS and shadcn/ui configured, so that the team has a consistent base.
+- Folder structure follows `app/ components/ features/ hooks/ services/ api/ store/ utils/ types/ assets/ routes/`.
+- Lint, format and test scripts run successfully.
+
+**US-002 – Backend and database setup**
+As a developer, I want a Node.js (Express/NestJS) API with PostgreSQL and Prisma, so that features can persist data.
+- Base entities and migrations exist (Users, Roles, Permissions, Companies, Contacts, Leads, Deals, Activities, Tasks, CalendarEvents, Notes, Documents, Emails, Notifications, Tags, Pipelines, Stages, AuditLogs).
+- Health-check endpoint responds.
+
+**US-003 – Shared UI component library**
+As a developer, I want reusable UI components (Button, Modal, Table, Card, Form, Input, Select, Date Picker, Avatar, Badge, Tabs, Pagination, Search, Filters, Toast, Skeleton Loader, Empty State), so that screens look and behave consistently.
+
+---
+
+## Phase 1 – Authentication & User Roles
+
+**US-004 – Login**
+As a user, I want to log in with email and password, so that I can access the CRM.
+- Valid credentials return a JWT and redirect to the dashboard; invalid ones show an error.
+
+**US-005 – Register**
+As a new user, I want to register an account, so that I can be granted access.
+- Form is validated with Zod; duplicate emails are rejected.
+
+**US-006 – Forgot / reset password**
+As a user, I want to reset my password via an emailed link, so that I can regain access.
+
+**US-007 – JWT session handling**
+As a user, I want my session to be kept securely and refreshed or expired properly, so that I stay logged in safely.
+- Protected routes redirect unauthenticated users to login.
+
+**US-008 – User profile**
+As a user, I want to view and edit my profile, so that my details are current.
+
+**US-009 – Change password**
+As a user, I want to change my password, so that I can keep my account secure.
+
+**US-010 – Roles & permissions**
+As an Admin, I want to assign the roles Admin, Sales, Manager or Support to users, so that each person only sees and does what they are allowed to.
+- API and UI enforce permissions per role.
+
+---
+
+## Phase 2 – Dashboard & Application Layout
+
+**US-011 – App layout**
+As a user, I want a Sidebar, Top Navbar, Breadcrumbs and Footer, so that I can navigate the CRM easily.
+
+**US-012 – Dashboard summary**
+As a user, I want a dashboard showing sales overview, new leads and open deals, so that I see business status at a glance.
+
+**US-013 – Dashboard revenue chart**
+As a Manager, I want revenue charts on the dashboard, so that I can follow trends.
+
+**US-014 – Dashboard tasks and activity**
+As a user, I want to see upcoming tasks, recent activities and notifications on the dashboard, so that I know what needs attention.
+
+**US-015 – Quick actions**
+As a Sales user, I want quick actions (add contact, lead, deal, task), so that I can create records in one click.
+
+---
+
+## Phase 3 – Contacts & Companies
+
+**US-016 – Create contact**
+As a Sales user, I want to create a contact with name, company, email, phone, address, tags, notes and social links, so that customer data is stored.
+
+**US-017 – Edit and delete contact**
+As a Sales user, I want to edit or delete a contact, so that data stays accurate.
+
+**US-018 – List, search and filter contacts**
+As a user, I want to search and filter contacts in a paginated table, so that I can find people quickly.
+
+**US-019 – Import contacts from CSV**
+As a Sales user, I want to import contacts from a CSV file, so that I can migrate existing data.
+- Invalid rows are reported without blocking valid ones.
+
+**US-020 – Export contacts**
+As a Manager, I want to export contacts, so that I can use the data elsewhere.
+
+**US-021 – Tags**
+As a user, I want to tag contacts, so that I can group and filter them.
+
+**US-022 – Create and edit company**
+As a Sales user, I want to manage companies (name, industry, employees, revenue, website), so that organizations are tracked.
+
+**US-023 – Company detail page**
+As a Sales user, I want to see a company's contacts, deals and notes in one page, so that I have the full picture.
+
+**US-024 – Contact detail page**
+As a Sales user, I want a contact page showing activities, tasks and emails, so that I see the full relationship history.
+
+**US-025 – Notes on customers**
+As a user, I want to add notes to contacts, companies and deals, so that important information such as preferences and budget is captured.
+
+---
+
+## Phase 4 – Leads & Deal Pipelines
+
+**US-026 – Create and edit lead**
+As a Sales user, I want to create a lead with source, value, owner, priority, status and notes, so that potential customers are tracked.
+
+**US-027 – Lead pipeline stages**
+As a Sales user, I want leads to move through New Lead → Contacted → Qualified → Proposal Sent → Negotiation → Won/Lost, so that progress is visible.
+
+**US-028 – Lead attachments**
+As a Sales user, I want to attach files to a lead, so that related material is kept together.
+
+**US-029 – Lead assignment**
+As a Manager, I want to assign or reassign a lead owner, so that work is distributed.
+
+**US-030 – Create and edit deal**
+As a Sales user, I want to create a deal with name, customer, value, stage, expected closing date and probability, so that sales opportunities are tracked.
+
+**US-031 – Deal Kanban board**
+As a Sales user, I want a Kanban board with drag-and-drop between stages, so that I can update deals quickly.
+
+**US-032 – Convert lead to deal**
+As a Sales user, I want to convert a qualified lead into a deal, so that I don't re-enter data.
+
+**US-033 – Manage pipelines and stages**
+As an Admin, I want to configure pipelines and stages, so that the process matches our business.
+
+---
+
+## Phase 5 – Activities, Tasks & Calendar
+
+**US-034 – Log activities**
+As a user, I want to log calls, meetings, emails, SMS and notes against a contact or deal, so that every interaction is recorded.
+
+**US-035 – Activity timeline**
+As a user, I want a timeline grouped by day (Today, Yesterday …), so that I can review history.
+
+**US-036 – Create tasks**
+As a user, I want to create tasks with assignee, due date, priority and status, so that follow-ups are managed.
+
+**US-037 – Task reminders**
+As a user, I want reminders before a task is due, so that I don't miss it.
+
+**US-038 – Task list and filters**
+As a user, I want to filter tasks by assignee, status and priority, so that I can focus.
+
+**US-039 – Calendar views**
+As a user, I want Day, Week and Month calendar views of meetings, calls, tasks and deadlines, so that I can plan my time.
+
+**US-040 – Calendar task view**
+As a user, I want to create and reschedule events and tasks directly from the calendar, so that scheduling is fast.
+
+---
+
+## Phase 6 – Reporting & Analytics
+
+**US-041 – Sales reports**
+As a Manager, I want Monthly Sales and Revenue reports, so that I can track performance.
+
+**US-042 – Funnel and conversion**
+As a Manager, I want Sales Funnel and Lead Conversion reports, so that I can spot bottlenecks.
+
+**US-043 – Win rate and lost deals**
+As a Manager, I want Win Rate and Lost Deals reports, so that I can learn from outcomes.
+
+**US-044 – Team performance**
+As a Manager, I want a Team Performance report, so that I can coach my team.
+
+**US-045 – Report filters and export**
+As a Manager, I want to filter reports by date range, owner and pipeline and export them, so that I can share results.
+
+---
+
+## Phase 7 – Notifications, Email & Documents
+
+**US-046 – In-app notifications**
+As a user, I want notifications for new lead assigned, deal won, task overdue and meeting reminders, so that I react in time.
+
+**US-047 – Real-time notifications**
+As a user, I want notifications delivered in real time via Socket.IO, so that I don't need to refresh.
+
+**US-048 – Notification center**
+As a user, I want to view, mark as read and clear notifications, so that I stay organized.
+
+**US-049 – Send email**
+As a Sales user, I want to send emails to contacts with attachments from the CRM, so that communication is tracked in one place.
+
+**US-050 – Email templates**
+As a Sales user, I want reusable email templates, so that I write faster.
+
+**US-051 – Email history and tracking**
+As a Sales user, I want email history and open tracking per contact, so that I know whether messages were seen.
+
+**US-052 – Upload documents**
+As a user, I want to upload contracts, proposals, invoices, PDFs and images to contacts, companies and deals (S3/Cloudinary), so that files are centralized.
+
+**US-053 – Manage documents**
+As a user, I want to preview, download and delete documents, so that I can manage them.
+
+---
+
+## Phase 8 – Settings & Administration
+
+**US-054 – Company settings and branding**
+As an Admin, I want to set company details, branding and theme, so that the CRM reflects our identity.
+
+**US-055 – Teams and users**
+As an Admin, I want to manage teams and users, so that access is organized.
+
+**US-056 – Roles settings**
+As an Admin, I want to edit role permissions, so that access fits our policies.
+
+**US-057 – Email settings**
+As an Admin, I want to configure email sending (SMTP/provider), so that outbound mail works.
+
+**US-058 – Audit log**
+As an Admin, I want an audit log of key changes, so that actions are traceable.
+
+**US-059 – Support access**
+As a Support user, I want to view contacts, activities and notes and create tasks, without access to sales reports or settings, so that I can help customers within my permissions.
+
+---
+
+## Phase 9 – Integrations, Automation & AI (Later)
+
+**US-060 – Integrations settings**
+As an Admin, I want to enable and configure third-party integrations, so that the CRM connects to other tools.
+
+**US-061 – Workflow automation**
+As an Admin, I want rules such as "if deal is won, create onboarding task", so that routine work is automated.
+
+**US-062 – Custom fields**
+As an Admin, I want custom fields on records, so that we can store business-specific data.
+
+**US-063 – Custom pipelines**
+As an Admin, I want multiple custom pipelines, so that different sales processes are supported.
+
+**US-064 – AI lead scoring**
+As a Sales user, I want leads scored by AI, so that I prioritize the best ones.
+
+**US-065 – AI email drafting and summaries**
+As a Sales user, I want AI to draft emails and summarize threads, so that I save time.
+
+**US-066 – REST API and webhooks**
+As a developer, I want a public REST API and webhooks, so that external systems can integrate.
+
+**US-067 – SMS, WhatsApp and VOIP**
+As a Sales user, I want to send SMS/WhatsApp and make VOIP calls from the CRM, so that all channels are tracked.
+
+**US-068 – Electronic signatures**
+As a Sales user, I want to send documents for e-signature, so that contracts close faster.
+
+**US-069 – Invoice generation and inventory**
+As a Sales user, I want to generate invoices from won deals and integrate inventory, so that billing is streamlined.
+
+**US-070 – Marketing campaigns**
+As a Manager, I want to run marketing campaigns to segments of contacts, so that I can nurture leads.
+
+**US-071 – Customer portal**
+As a customer, I want a portal to view my documents, invoices and requests, so that I can self-serve.
+
+**US-072 – Mobile PWA**
+As a user, I want a mobile-responsive Progressive Web App, so that I can use the CRM on the go.
