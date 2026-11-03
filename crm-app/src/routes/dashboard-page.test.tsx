@@ -31,8 +31,15 @@ function renderDashboard() {
   )
 }
 
+const noAttention = {
+  tasks: { items: [], open: 0, overdue: 0 },
+  activities: [],
+  notifications: { items: [], unread: 0 },
+}
+
 beforeEach(() => {
   vi.resetAllMocks()
+  vi.mocked(dashboard.getAttention).mockResolvedValue(noAttention)
   useAuthStore.setState({ token: 'jwt', user, initialized: true })
 })
 
@@ -132,5 +139,113 @@ describe('Revenue chart', () => {
     )
     renderDashboard()
     expect(await screen.findByText('No revenue yet')).toBeInTheDocument()
+  })
+})
+
+describe('Tasks, activity and notifications', () => {
+  const day = 24 * 60 * 60 * 1000
+  const attention = {
+    tasks: {
+      items: [
+        {
+          id: 't1',
+          title: 'Chase invoice',
+          status: 'TODO' as const,
+          dueDate: new Date(Date.now() - 2 * day).toISOString(),
+        },
+        {
+          id: 't2',
+          title: 'Prep demo',
+          status: 'TODO' as const,
+          dueDate: new Date(Date.now() + 3 * day).toISOString(),
+        },
+        { id: 't3', title: 'Tidy CRM', status: 'TODO' as const, dueDate: null },
+      ],
+      open: 7,
+      overdue: 1,
+    },
+    activities: [
+      {
+        id: 'a1',
+        type: 'CALL' as const,
+        subject: 'Intro call',
+        occurredAt: new Date(Date.now() - 3600_000).toISOString(),
+        user: { firstName: 'Bob', lastName: 'Ray' },
+        contact: { firstName: 'Cy', lastName: 'Doe' },
+        deal: null,
+      },
+    ],
+    notifications: {
+      items: [
+        {
+          id: 'n1',
+          type: 'task',
+          message: 'Task assigned to you',
+          readAt: null,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: 'n2',
+          type: 'task',
+          message: 'Old news',
+          readAt: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+        },
+      ],
+      unread: 1,
+    },
+  }
+
+  it('shows upcoming tasks with overdue flagged, recent activity and notifications', async () => {
+    vi.mocked(dashboard.getDashboardSummary).mockResolvedValue({
+      sales: null,
+      newLeads: null,
+      openDeals: null,
+    })
+    vi.mocked(dashboard.getAttention).mockResolvedValue(attention)
+    renderDashboard()
+
+    expect(await screen.findByText('Chase invoice')).toBeInTheDocument()
+    expect(screen.getByText(/Overdue 2 days ago/)).toBeInTheDocument()
+    expect(screen.getByText('1 overdue')).toBeInTheDocument()
+    expect(screen.getByText(/Due in 3 days/)).toBeInTheDocument()
+    expect(screen.getByText('No due date')).toBeInTheDocument()
+    expect(screen.getByText('+4 more open')).toBeInTheDocument()
+
+    expect(screen.getByText('Intro call')).toBeInTheDocument()
+    expect(screen.getByText(/Bob Ray · Cy Doe · about 1 hour ago/)).toBeInTheDocument()
+
+    expect(screen.getByText(/Unread:/)).toBeInTheDocument()
+    expect(screen.getByText('1 unread')).toBeInTheDocument()
+    expect(screen.getByText('Old news')).toBeInTheDocument()
+  })
+
+  it('skips sections the role cannot read and shows friendly empty states', async () => {
+    vi.mocked(dashboard.getDashboardSummary).mockResolvedValue({
+      sales: null,
+      newLeads: null,
+      openDeals: null,
+    })
+    vi.mocked(dashboard.getAttention).mockResolvedValue({
+      tasks: null,
+      activities: null,
+      notifications: { items: [], unread: 0 },
+    })
+    renderDashboard()
+
+    expect(await screen.findByText("You're all caught up.")).toBeInTheDocument()
+    expect(screen.queryByText('Upcoming tasks')).not.toBeInTheDocument()
+    expect(screen.queryByText('Recent activity')).not.toBeInTheDocument()
+  })
+
+  it('shows an error if it cannot be loaded', async () => {
+    vi.mocked(dashboard.getDashboardSummary).mockResolvedValue({
+      sales: null,
+      newLeads: null,
+      openDeals: null,
+    })
+    vi.mocked(dashboard.getAttention).mockRejectedValue(new Error('boom'))
+    renderDashboard()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load tasks and activity')
   })
 })

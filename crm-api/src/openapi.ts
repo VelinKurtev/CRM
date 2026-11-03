@@ -285,6 +285,62 @@ export const openapi = {
         },
       },
     },
+    '/dashboard/attention': {
+      get: {
+        tags: ['Dashboard'],
+        summary: 'Tasks, activity and notifications',
+        description:
+          "The caller's open tasks (soonest due first, with open and overdue counts), the latest team activities, and the caller's own notifications (with unread count). `tasks` needs `tasks:read` and `activities` needs `activities:read`; each is `null` otherwise.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Up to five of each',
+            content: {
+              'application/json': {
+                example: {
+                  tasks: {
+                    items: [
+                      {
+                        id: 'c1',
+                        title: 'Call Acme',
+                        status: 'TODO',
+                        dueDate: '2026-11-05T09:00:00.000Z',
+                      },
+                    ],
+                    open: 4,
+                    overdue: 1,
+                  },
+                  activities: [
+                    {
+                      id: 'a1',
+                      type: 'CALL',
+                      subject: 'Intro call',
+                      occurredAt: '2026-11-04T10:00:00.000Z',
+                      user: { firstName: 'Ann', lastName: 'Lee' },
+                      contact: { firstName: 'Bob', lastName: 'Ray' },
+                      deal: null,
+                    },
+                  ],
+                  notifications: {
+                    items: [
+                      {
+                        id: 'n1',
+                        type: 'task',
+                        message: 'A task was assigned to you',
+                        readAt: null,
+                        createdAt: '2026-11-04T10:00:00.000Z',
+                      },
+                    ],
+                    unread: 1,
+                  },
+                },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+        },
+      },
+    },
     '/users': {
       get: {
         tags: ['Users'],

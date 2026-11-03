@@ -61,7 +61,7 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
 - [x] **US-013 – Dashboard revenue chart**
   As a Manager, I want revenue charts on the dashboard, so that I can follow trends.
 
-- [ ] **US-014 – Dashboard tasks and activity**
+- [x] **US-014 – Dashboard tasks and activity**
   As a user, I want to see upcoming tasks, recent activities and notifications on the dashboard, so that I know what needs attention.
 
 - [ ] **US-015 – Quick actions**

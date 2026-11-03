@@ -97,3 +97,63 @@ dashboardRouter.get('/dashboard/revenue', requirePermission('reports:read'), asy
 
   res.json({ months: [...byMonth].map(([month, v]) => ({ month, ...v })) })
 })
+
+const ATTENTION_LIMIT = 5
+
+/**
+ * What needs the caller's attention: their open tasks (soonest due first), the latest team
+ * activity, and their own notifications. Tasks and activities are `null` without read access.
+ */
+dashboardRouter.get('/dashboard/attention', authenticate, async (req, res) => {
+  const userId = req.auth!.userId
+  const user = await prisma.user.findUnique({ where: { id: userId }, include: userInclude })
+  if (!user || !user.isActive) throw new HttpError(401, 'Invalid or expired token')
+  const have = new Set(permissionsOf(user))
+
+  const openTasks = { assigneeId: userId, status: { not: 'DONE' as const } }
+
+  const tasks = have.has('tasks:read')
+    ? await Promise.all([
+        prisma.task.findMany({
+          where: openTasks,
+          orderBy: [{ dueDate: { sort: 'asc', nulls: 'last' } }, { createdAt: 'desc' }],
+          take: ATTENTION_LIMIT,
+          select: { id: true, title: true, status: true, dueDate: true },
+        }),
+        prisma.task.count({ where: openTasks }),
+        prisma.task.count({ where: { ...openTasks, dueDate: { lt: new Date() } } }),
+      ])
+    : null
+
+  const activities = have.has('activities:read')
+    ? await prisma.activity.findMany({
+        orderBy: { occurredAt: 'desc' },
+        take: ATTENTION_LIMIT,
+        select: {
+          id: true,
+          type: true,
+          subject: true,
+          occurredAt: true,
+          user: { select: { firstName: true, lastName: true } },
+          contact: { select: { firstName: true, lastName: true } },
+          deal: { select: { title: true } },
+        },
+      })
+    : null
+
+  const [notifications, unread] = await Promise.all([
+    prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: ATTENTION_LIMIT,
+      select: { id: true, type: true, message: true, readAt: true, createdAt: true },
+    }),
+    prisma.notification.count({ where: { userId, readAt: null } }),
+  ])
+
+  res.json({
+    tasks: tasks && { items: tasks[0], open: tasks[1], overdue: tasks[2] },
+    activities,
+    notifications: { items: notifications, unread },
+  })
+})
