@@ -104,3 +104,54 @@ describe('PATCH /api/users/me', () => {
     expect(me.body.user).toMatchObject({ email, role: 'MANAGER' })
   })
 })
+
+describe('POST /api/users/me/password', () => {
+  const change = (body: object, tok = token) =>
+    request(app).post('/api/users/me/password').set('Authorization', `Bearer ${tok}`).send(body)
+  const loginWith = (password: string) =>
+    request(app).post('/api/auth/login').send({ email, password })
+
+  it('requires authentication', async () => {
+    const res = await request(app)
+      .post('/api/users/me/password')
+      .send({ currentPassword: 'x', newPassword: 'NewPass123' })
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects a wrong current password and leaves the password unchanged', async () => {
+    const res = await change({ currentPassword: 'wrong', newPassword: 'NewPass123' })
+    expect(res.status).toBe(400)
+    expect(res.body.error.details).toHaveProperty('currentPassword')
+    expect((await loginWith('Secret123!')).status).toBe(200)
+  })
+
+  it('rejects weak or unchanged passwords', async () => {
+    const weak = await change({ currentPassword: 'Secret123!', newPassword: 'weak' })
+    expect(weak.status).toBe(400)
+    expect(weak.body.error.details).toHaveProperty('newPassword')
+    const same = await change({ currentPassword: 'Secret123!', newPassword: 'Secret123!' })
+    expect(same.status).toBe(400)
+    expect(same.body.error.details).toHaveProperty('newPassword')
+  })
+
+  it('changes the password, signs out other devices and keeps this one signed in', async () => {
+    const other = await loginWith('Secret123!')
+    const otherCookie = (other.headers['set-cookie'] as unknown as string[])[0].split(';')[0]
+
+    const res = await change({ currentPassword: 'Secret123!', newPassword: 'Changed456' })
+    expect(res.status).toBe(200)
+    expect(res.body.token).toEqual(expect.any(String))
+    expect(JSON.stringify(res.body)).not.toMatch(/Changed456|passwordHash/)
+
+    expect((await loginWith('Secret123!')).status).toBe(401)
+    expect((await loginWith('Changed456')).status).toBe(200)
+
+    // The other device's refresh token no longer works...
+    const stale = await request(app).post('/api/auth/refresh').set('Cookie', otherCookie)
+    expect(stale.status).toBe(401)
+    // ...but this device's new one does.
+    const mine = (res.headers['set-cookie'] as unknown as string[])[0].split(';')[0]
+    const ok = await request(app).post('/api/auth/refresh').set('Cookie', mine)
+    expect(ok.status).toBe(200)
+  })
+})

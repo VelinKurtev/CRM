@@ -41,7 +41,7 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
 - [x] **US-008 – User profile**
   As a user, I want to view and edit my profile, so that my details are current.
 
-- [ ] **US-009 – Change password**
+- [x] **US-009 – Change password**
   As a user, I want to change my password, so that I can keep my account secure.
 
 - [ ] **US-010 – Roles & permissions**

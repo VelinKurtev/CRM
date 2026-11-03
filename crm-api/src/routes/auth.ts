@@ -11,6 +11,7 @@ import { prisma } from '../lib/prisma.js'
 import { publicUser } from '../lib/public-user.js'
 import { endSession, rotateSession, startSession } from '../lib/session.js'
 import { authenticate } from '../middleware/authenticate.js'
+import { passwordSchema } from '../lib/password-schema.js'
 import { validateBody } from '../middleware/validate.js'
 
 export const authRouter = Router()
@@ -25,14 +26,6 @@ const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', 10)
 
 /** Role given to self-registered users (least privilege); an admin can change it later. */
 const DEFAULT_ROLE = 'SUPPORT'
-
-const passwordSchema = z
-  .string()
-  .min(8, 'Password must be at least 8 characters')
-  .max(72, 'Password must be at most 72 characters')
-  .regex(/[a-z]/, 'Password must contain a lowercase letter')
-  .regex(/[A-Z]/, 'Password must contain an uppercase letter')
-  .regex(/[0-9]/, 'Password must contain a number')
 
 const registerSchema = z.object({
   firstName: z.string().trim().min(1, 'First name is required').max(100),

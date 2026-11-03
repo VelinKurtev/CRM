@@ -21,6 +21,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { updateProfile } from '@/services/auth'
 import { useAuthStore } from '@/store/auth-store'
+import { ChangePasswordCard } from './change-password-card'
 import { profileSchema, type ProfileValues } from './schemas'
 
 const initials = (first = '', last = '') => `${first[0] ?? ''}${last[0] ?? ''}`.toUpperCase()
@@ -145,6 +146,7 @@ export function ProfilePage() {
           </Form>
         </CardContent>
       </Card>
+      <ChangePasswordCard />
     </main>
   )
 }

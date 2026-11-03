@@ -232,6 +232,43 @@ export const openapi = {
         },
       },
     },
+    '/users/me/password': {
+      post: {
+        tags: ['Users'],
+        summary: 'Change my password',
+        description:
+          'Requires the current password. Signs out all other devices (their refresh tokens are revoked) and returns a fresh session for this one.',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['currentPassword', 'newPassword'],
+                properties: {
+                  currentPassword: { type: 'string' },
+                  newPassword: { type: 'string', minLength: 8 },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Password changed',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/LoginResponse' } },
+            },
+          },
+          '400': { $ref: '#/components/responses/ValidationError' },
+          '401': {
+            description: 'Missing, invalid or expired token',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
+          },
+        },
+      },
+    },
     '/auth/me': {
       get: {
         tags: ['Auth'],

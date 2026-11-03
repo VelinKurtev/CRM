@@ -30,3 +30,8 @@ export type ProfileInput = { firstName: string; lastName: string; avatarUrl: str
 
 export const updateProfile = (input: ProfileInput) =>
   api.patch<{ user: AuthUser }>('/users/me', input).then((r) => r.data.user)
+
+export const changePassword = (currentPassword: string, newPassword: string) =>
+  api
+    .post<LoginResponse>('/users/me/password', { currentPassword, newPassword })
+    .then((r) => r.data)
