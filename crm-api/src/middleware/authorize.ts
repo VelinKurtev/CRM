@@ -28,8 +28,13 @@ export const requirePermission =
     next()
   }
 
-/** True if the user's role grants `permission` (read fresh from the database). */
-export async function userHasPermission(userId: string, permission: Permission) {
+/** Every permission the user's role grants (read fresh from the database); empty if inactive. */
+export async function getPermissions(userId: string) {
   const user = await prisma.user.findUnique({ where: { id: userId }, include: userInclude })
-  return !!user?.isActive && permissionsOf(user).includes(permission)
+  return new Set(user?.isActive ? permissionsOf(user) : [])
+}
+
+/** True if the user's role grants `permission`. */
+export async function userHasPermission(userId: string, permission: Permission) {
+  return (await getPermissions(userId)).has(permission)
 }

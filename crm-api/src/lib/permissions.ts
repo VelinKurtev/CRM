@@ -18,6 +18,7 @@ const CRM_ENTITIES = [
 /** Every permission the system knows about, as `resource:action`. */
 export const PERMISSIONS = [
   ...CRM_ENTITIES.flatMap((e) => [`${e}:read`, `${e}:write`, `${e}:delete`]),
+  'contacts:delete_own', // delete contacts you own (contacts:delete covers anyone's)
   'reports:read',
   'users:read', // see the team list
   'users:manage', // assign roles, manage accounts
@@ -36,9 +37,11 @@ export const ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
   // Runs the team: full control of CRM data and reports, can see (not manage) users.
   MANAGER: [...all(CRM_ENTITIES, ['read', 'write', 'delete']), 'reports:read', 'users:read'],
 
-  // Works the pipeline: create/edit CRM data, but can't delete contacts, companies, deals or leads.
+  // Works the pipeline: create/edit CRM data, but can't delete other people's contacts, or any
+  // companies, deals or leads. They can remove contacts they created themselves.
   SALES: [
     ...all(CRM_ENTITIES, ['read', 'write']),
+    'contacts:delete_own',
     ...all(['tasks', 'activities', 'notes'], ['delete']),
   ],
 

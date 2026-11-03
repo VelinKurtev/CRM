@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import { AppLayout } from '@/components/layout/app-layout'
+import { EditContactPage } from '@/features/contacts/edit-contact-page'
 import { NewContactPage } from '@/features/contacts/new-contact-page'
 import { UsersPage } from '@/features/admin/users-page'
 import { ForgotPasswordPage } from '@/features/auth/forgot-password-page'
@@ -38,6 +39,11 @@ export const routes = [
                   // The contact list (US-018) will replace this redirect.
                   { index: true, element: <Navigate to="/contacts/new" replace /> },
                   { path: 'new', element: <NewContactPage />, handle: { crumb: 'New contact' } },
+                  {
+                    path: ':id/edit',
+                    element: <EditContactPage />,
+                    handle: { crumb: 'Edit contact' },
+                  },
                 ],
               },
             ],

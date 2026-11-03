@@ -26,6 +26,10 @@ describe('role permission matrix', () => {
     expect(count('MANAGER')).toBeGreaterThan(count('SALES'))
     expect(count('SALES')).toBeGreaterThan(count('SUPPORT'))
     expect(ROLE_PERMISSIONS.SALES).not.toContain('deals:delete')
+    // Sales may remove contacts they own, but not anyone's.
+    expect(ROLE_PERMISSIONS.SALES).toContain('contacts:delete_own')
+    expect(ROLE_PERMISSIONS.SALES).not.toContain('contacts:delete')
+    expect(ROLE_PERMISSIONS.SUPPORT).not.toContain('contacts:delete_own')
     expect(ROLE_PERMISSIONS.SUPPORT).not.toContain('deals:write')
     expect(ROLE_PERMISSIONS.SUPPORT).not.toContain('leads:read')
   })

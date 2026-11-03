@@ -392,6 +392,62 @@ export const openapi = {
         },
       },
     },
+    '/contacts/{id}': {
+      get: {
+        tags: ['Records'],
+        summary: 'Get contact',
+        description:
+          'Requires `contacts:read`. Includes company, tags, notes, counts of related records (`related`) and `canDelete` for the caller.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': { description: 'The contact' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'No such contact' },
+        },
+      },
+      patch: {
+        tags: ['Records'],
+        summary: 'Update contact',
+        description:
+          'Requires `contacts:write`. Send only what changes: a field left out is kept, `null` clears an optional field (`company: null` unlinks the company). `tags` replaces the whole tag list. Owner cannot be changed here.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                description: 'Same fields as create (except `note`); all optional, most nullable.',
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'The updated contact' },
+          '400': { description: 'Validation failed' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'No such contact' },
+        },
+      },
+      delete: {
+        tags: ['Records'],
+        summary: 'Delete contact',
+        description:
+          "Needs `contacts:delete` (Manager, Admin: any contact) or `contacts:delete_own` (Sales: contacts they own). The contact's notes, tasks, activities and tag links are deleted with it; its deals and leads stay but lose the link. Recorded in the audit log.",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '204': { description: 'Deleted' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'No such contact' },
+        },
+      },
+    },
     '/companies': {
       get: {
         tags: ['Records'],

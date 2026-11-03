@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import type { NewContact } from '@/services/contacts'
+import type { ContactDetail, ContactUpdate, NewContact } from '@/services/contacts'
 
 const required = (label: string) => z.string().trim().min(1, `${label} is required`).max(100)
 const text = (max = 200) => z.string().trim().max(max, `Keep it under ${max} characters`)
@@ -59,4 +59,46 @@ export function toNewContact(values: ContactFormValues): NewContact {
   ) as unknown as NewContact
   if (tags.length > 0) body.tags = tags
   return body
+}
+
+/** The update body: blank optional fields become `null`, which clears them on the server. */
+export function toContactUpdate(values: ContactFormValues): ContactUpdate {
+  const orNull = (v: string) => v.trim() || null
+  return {
+    firstName: values.firstName.trim(),
+    lastName: values.lastName.trim(),
+    email: orNull(values.email),
+    phone: orNull(values.phone),
+    jobTitle: orNull(values.jobTitle),
+    company: orNull(values.company),
+    address: orNull(values.address),
+    city: orNull(values.city),
+    postalCode: orNull(values.postalCode),
+    country: orNull(values.country),
+    linkedinUrl: orNull(values.linkedinUrl),
+    twitterUrl: orNull(values.twitterUrl),
+    facebookUrl: orNull(values.facebookUrl),
+    tags: values.tags,
+  }
+}
+
+/** Form values for an existing contact (missing values become empty strings). */
+export function fromContact(c: ContactDetail): ContactFormValues {
+  return {
+    firstName: c.firstName,
+    lastName: c.lastName,
+    jobTitle: c.jobTitle ?? '',
+    email: c.email ?? '',
+    phone: c.phone ?? '',
+    company: c.company?.name ?? '',
+    address: c.address ?? '',
+    city: c.city ?? '',
+    postalCode: c.postalCode ?? '',
+    country: c.country ?? '',
+    linkedinUrl: c.linkedinUrl ?? '',
+    twitterUrl: c.twitterUrl ?? '',
+    facebookUrl: c.facebookUrl ?? '',
+    tags: c.tags,
+    note: '',
+  }
 }

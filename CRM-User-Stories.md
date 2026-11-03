@@ -74,7 +74,7 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
 - [x] **US-016 – Create contact**
   As a Sales user, I want to create a contact with name, company, email, phone, address, tags, notes and social links, so that customer data is stored.
 
-- [ ] **US-017 – Edit and delete contact**
+- [x] **US-017 – Edit and delete contact**
   As a Sales user, I want to edit or delete a contact, so that data stays accurate.
 
 - [ ] **US-018 – List, search and filter contacts**

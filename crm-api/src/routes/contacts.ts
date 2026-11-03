@@ -1,18 +1,25 @@
 import { Router } from 'express'
 import { z } from 'zod'
 
+import type { Prisma } from '../generated/prisma/client.js'
 import { HttpError } from '../lib/http-error.js'
 import { prisma } from '../lib/prisma.js'
 import { httpUrl, optionalText, requiredText } from '../lib/validation.js'
-import { requirePermission, userHasPermission } from '../middleware/authorize.js'
+import { authenticate } from '../middleware/authenticate.js'
+import { getPermissions, requirePermission } from '../middleware/authorize.js'
 import { validateBody } from '../middleware/validate.js'
 
 export const contactsRouter = Router()
 
+// ───────── Shared pieces ─────────
+
+const optionalEmail = z.string().trim().toLowerCase().pipe(z.email('Enter a valid email'))
+const tagsSchema = z.array(requiredText('Tag', 50)).max(20, 'At most 20 tags')
+
 const createContactSchema = z.object({
   firstName: requiredText('First name', 100),
   lastName: requiredText('Last name', 100),
-  email: z.string().trim().toLowerCase().pipe(z.email('Enter a valid email')).optional(),
+  email: optionalEmail.optional(),
   phone: optionalText(50),
   jobTitle: optionalText(100),
   /** Company name: links to an existing company (any letter case) or creates one. */
@@ -24,10 +31,90 @@ const createContactSchema = z.object({
   linkedinUrl: httpUrl.optional(),
   twitterUrl: httpUrl.optional(),
   facebookUrl: httpUrl.optional(),
-  tags: z.array(requiredText('Tag', 50)).max(20, 'At most 20 tags').optional(),
+  tags: tagsSchema.optional(),
   /** Becomes the first note on the contact. */
   note: z.string().trim().min(1).max(5000).optional(),
 })
+
+/** On update, `null` clears an optional field and leaving it out keeps it as it is. */
+const clearable = <T extends z.ZodType>(schema: T) => schema.nullable().optional()
+
+const updateContactSchema = z.object({
+  firstName: requiredText('First name', 100).optional(),
+  lastName: requiredText('Last name', 100).optional(),
+  email: clearable(optionalEmail),
+  phone: clearable(requiredText('Phone', 50)),
+  jobTitle: clearable(requiredText('Job title', 100)),
+  company: clearable(requiredText('Company', 200)),
+  address: clearable(requiredText('Address', 200)),
+  city: clearable(requiredText('City', 100)),
+  postalCode: clearable(requiredText('Postal code', 20)),
+  country: clearable(requiredText('Country', 100)),
+  linkedinUrl: clearable(httpUrl),
+  twitterUrl: clearable(httpUrl),
+  facebookUrl: clearable(httpUrl),
+  /** Replaces the contact's tags. */
+  tags: tagsSchema.optional(),
+})
+
+type Tx = Prisma.TransactionClient
+
+/** The company to link to: an existing one (any letter case), or a new one if allowed. */
+async function findCompanyOrCheckCanCreate(name: string, canCreate: boolean) {
+  const existing = await prisma.company.findFirst({
+    where: { name: { equals: name, mode: 'insensitive' } },
+  })
+  if (!existing && !canCreate) {
+    throw new HttpError(403, 'You cannot create new companies', {
+      company: 'Pick an existing company; you cannot create new ones',
+    })
+  }
+  return existing
+}
+
+async function resolveCompanyId(
+  tx: Tx,
+  name: string,
+  existing: { id: string } | null,
+  ownerId: string,
+) {
+  return (existing ?? (await tx.company.create({ data: { name, ownerId } }))).id
+}
+
+/** Ids for the tag names: reuse tags regardless of letter case, create the rest. */
+async function resolveTagIds(tx: Tx, names: string[]) {
+  const ids: string[] = []
+  for (const name of new Map(names.map((t) => [t.toLowerCase(), t])).values()) {
+    const found = await tx.tag.findFirst({ where: { name: { equals: name, mode: 'insensitive' } } })
+    const tag = found ?? (await tx.tag.upsert({ where: { name }, update: {}, create: { name } }))
+    ids.push(tag.id)
+  }
+  return ids
+}
+
+const contactInclude = {
+  company: { select: { id: true, name: true } },
+  tags: { select: { tag: { select: { name: true } } } },
+  notes: { select: { id: true, body: true, createdAt: true }, orderBy: { createdAt: 'desc' } },
+} as const satisfies Prisma.ContactInclude
+
+type ContactWithRelations = Prisma.ContactGetPayload<{ include: typeof contactInclude }>
+
+/** API shape: tags as plain names. */
+const present = ({ tags, ...contact }: ContactWithRelations) => ({
+  ...contact,
+  tags: tags.map((t) => t.tag.name).sort(),
+})
+
+/** Deleting needs `contacts:delete`, or `contacts:delete_own` for a contact you own. */
+const mayDelete = (permissions: Set<string>, contact: { ownerId: string | null }, userId: string) =>
+  permissions.has('contacts:delete') ||
+  (permissions.has('contacts:delete_own') && contact.ownerId === userId)
+
+const idOf = (req: { params: Record<string, string | string[] | undefined> }) =>
+  req.params.id as string
+
+// ───────── Create ─────────
 
 contactsRouter.post(
   '/contacts',
@@ -37,36 +124,18 @@ contactsRouter.post(
     const userId = req.auth!.userId
     const { company, tags = [], note, ...fields } = req.body as z.infer<typeof createContactSchema>
 
-    // Look up (or decide to create) the company before opening the transaction.
     const existingCompany = company
-      ? await prisma.company.findFirst({
-          where: { name: { equals: company, mode: 'insensitive' } },
-        })
+      ? await findCompanyOrCheckCanCreate(
+          company,
+          (await getPermissions(userId)).has('companies:write'),
+        )
       : null
-    if (company && !existingCompany && !(await userHasPermission(userId, 'companies:write'))) {
-      throw new HttpError(403, 'You cannot create new companies', {
-        company: 'Pick an existing company; you cannot create new ones',
-      })
-    }
 
     const contact = await prisma.$transaction(async (tx) => {
       const companyId = company
-        ? (
-            existingCompany ??
-            (await tx.company.create({ data: { name: company, ownerId: userId } }))
-          ).id
+        ? await resolveCompanyId(tx, company, existingCompany, userId)
         : undefined
-
-      // Reuse tags regardless of letter case; create the rest.
-      const tagIds: string[] = []
-      for (const name of new Map(tags.map((t) => [t.toLowerCase(), t])).values()) {
-        const found = await tx.tag.findFirst({
-          where: { name: { equals: name, mode: 'insensitive' } },
-        })
-        const tag =
-          found ?? (await tx.tag.upsert({ where: { name }, update: {}, create: { name } }))
-        tagIds.push(tag.id)
-      }
+      const tagIds = await resolveTagIds(tx, tags)
 
       return tx.contact.create({
         data: {
@@ -76,18 +145,119 @@ contactsRouter.post(
           tags: { create: tagIds.map((tagId) => ({ tagId })) },
           notes: note ? { create: { body: note, authorId: userId } } : undefined,
         },
-        include: {
-          company: { select: { id: true, name: true } },
-          tags: { select: { tag: { select: { name: true } } } },
-          notes: { select: { id: true, body: true } },
-        },
+        include: contactInclude,
       })
     })
 
-    const { tags: tagLinks, ...rest } = contact
-    res.status(201).json({ contact: { ...rest, tags: tagLinks.map((t) => t.tag.name) } })
+    res.status(201).json({ contact: present(contact) })
   },
 )
+
+// ───────── Read, update, delete ─────────
+
+contactsRouter.get('/contacts/:id', requirePermission('contacts:read'), async (req, res) => {
+  const userId = req.auth!.userId
+  const contact = await prisma.contact.findUnique({
+    where: { id: idOf(req) },
+    include: {
+      ...contactInclude,
+      _count: { select: { deals: true, leads: true, tasks: true, activities: true, notes: true } },
+    },
+  })
+  if (!contact) throw new HttpError(404, 'Contact not found')
+
+  const { _count, ...rest } = contact
+  res.json({
+    contact: {
+      ...present(rest),
+      // What deleting would remove or detach, so the UI can warn before it happens.
+      related: _count,
+      canDelete: mayDelete(await getPermissions(userId), contact, userId),
+    },
+  })
+})
+
+contactsRouter.patch(
+  '/contacts/:id',
+  requirePermission('contacts:write'),
+  validateBody(updateContactSchema),
+  async (req, res) => {
+    const userId = req.auth!.userId
+    const id = idOf(req)
+    const { company, tags, ...fields } = req.body as z.infer<typeof updateContactSchema>
+
+    if (!(await prisma.contact.findUnique({ where: { id }, select: { id: true } }))) {
+      throw new HttpError(404, 'Contact not found')
+    }
+    const existingCompany = company
+      ? await findCompanyOrCheckCanCreate(
+          company,
+          (await getPermissions(userId)).has('companies:write'),
+        )
+      : null
+
+    const contact = await prisma.$transaction(async (tx) => {
+      // `null` unlinks the company; a name links (or creates) it; absent leaves it alone.
+      const companyId =
+        company === undefined
+          ? undefined
+          : company === null
+            ? null
+            : await resolveCompanyId(tx, company, existingCompany, userId)
+
+      if (tags) {
+        const tagIds = await resolveTagIds(tx, tags)
+        await tx.tagOnContact.deleteMany({ where: { contactId: id } })
+        await tx.tagOnContact.createMany({
+          data: tagIds.map((tagId) => ({ tagId, contactId: id })),
+        })
+      }
+
+      return tx.contact.update({
+        where: { id },
+        data: { ...fields, companyId },
+        include: contactInclude,
+      })
+    })
+
+    res.json({ contact: present(contact) })
+  },
+)
+
+contactsRouter.delete('/contacts/:id', authenticate, async (req, res) => {
+  const userId = req.auth!.userId
+  const permissions = await getPermissions(userId)
+  // Either permission lets you in; which contacts you may delete is decided below.
+  if (!permissions.has('contacts:delete') && !permissions.has('contacts:delete_own')) {
+    throw new HttpError(403, 'You do not have permission')
+  }
+
+  const id = idOf(req)
+  const contact = await prisma.contact.findUnique({
+    where: { id },
+    select: { id: true, ownerId: true, firstName: true, lastName: true },
+  })
+  if (!contact) throw new HttpError(404, 'Contact not found')
+  if (!mayDelete(permissions, contact, userId)) {
+    throw new HttpError(403, 'You can only delete contacts you own')
+  }
+
+  // Notes, tasks, activities and tag links go with the contact; deals and leads stay unlinked.
+  await prisma.$transaction([
+    prisma.contact.delete({ where: { id } }),
+    prisma.auditLog.create({
+      data: {
+        action: 'DELETE',
+        entityType: 'Contact',
+        entityId: id,
+        userId,
+        ipAddress: req.ip,
+        changes: { name: `${contact.firstName} ${contact.lastName}` },
+      },
+    }),
+  ])
+  res.status(204).end()
+})
 
 // ───────── Suggestions for the create form ─────────
 
