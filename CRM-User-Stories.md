@@ -23,9 +23,9 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
 
 ## Phase 1 – Authentication & User Roles
 
-- [ ] **US-004 – Login**
+- [x] **US-004 – Login**
   As a user, I want to log in with email and password, so that I can access the CRM.
-  - [ ] Valid credentials return a JWT and redirect to the dashboard; invalid ones show an error.
+  - [x] Valid credentials return a JWT and redirect to the dashboard; invalid ones show an error.
 
 - [ ] **US-005 – Register**
   As a new user, I want to register an account, so that I can be granted access.

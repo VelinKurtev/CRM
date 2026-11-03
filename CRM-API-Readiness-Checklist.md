@@ -17,28 +17,28 @@ Legend: 🔴 should exist for Phase 1 to be considered done · 🟡 recommended 
 
 ## 2. Validation & errors
 
-- [ ] 🔴 `validate(schema)` middleware for body, query and params; returns 400 with per-field errors
-- [ ] 🔴 Central error-handling middleware with one consistent JSON error shape
-- [ ] 🔴 `HttpError` helper (400/401/403/404/409) used instead of ad-hoc `res.status()` calls
-- [ ] 🔴 Unknown routes return a JSON 404
+- [x] 🔴 `validate(schema)` middleware for body, query and params; returns 400 with per-field errors
+- [x] 🔴 Central error-handling middleware with one consistent JSON error shape
+- [x] 🔴 `HttpError` helper (400/401/403/404/409) used instead of ad-hoc `res.status()` calls
+- [x] 🔴 Unknown routes return a JSON 404
 - [ ] 🟡 No stack traces or internal messages leak in production responses
 
 ## 3. Authentication & authorization
 
-- [ ] 🔴 Passwords hashed with bcrypt or argon2 — never stored or logged in plain text
+- [x] 🔴 Passwords hashed with bcrypt or argon2 — never stored or logged in plain text
 - [ ] 🔴 JWT signed with a secret from env; access-token expiry configured
 - [ ] 🔴 Refresh-token or session strategy implemented per US-007
-- [ ] 🔴 `authenticate` middleware protects all non-public routes
+- [x] 🔴 `authenticate` middleware protects all non-public routes
 - [ ] 🔴 RBAC middleware (`requireRole` / `requirePermission`) enforces Admin, Sales, Manager, Support access
 - [ ] 🔴 Registration rejects duplicate emails (409) and validates input with Zod
 - [ ] 🔴 Password reset tokens are single-use and expire
-- [ ] 🟡 Inactive users (`isActive = false`) cannot log in
-- [ ] 🟡 Login does not reveal whether the email or the password was wrong
+- [x] 🟡 Inactive users (`isActive = false`) cannot log in
+- [x] 🟡 Login does not reveal whether the email or the password was wrong
 
 ## 4. Database
 
-- [ ] 🔴 Seed script creates default roles, permissions, an admin user and a default pipeline with stages
-- [ ] 🔴 Seed is idempotent (safe to run twice)
+- [x] 🔴 Seed script creates default roles, permissions, an admin user and a default pipeline with stages
+- [x] 🔴 Seed is idempotent (safe to run twice)
 - [ ] 🔴 Any schema changes from Phase 1 (e.g. reset tokens, refresh tokens) have committed migrations
 - [ ] 🟡 `npm run db:seed` script exists and is documented in the README
 - [ ] 🟡 Indexes exist on columns used for login and lookup (`User.email` is unique)
