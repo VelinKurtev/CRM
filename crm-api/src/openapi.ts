@@ -124,10 +124,40 @@ export const openapi = {
         },
       },
     },
+    '/auth/refresh': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Get a new access token using the refresh cookie',
+        description:
+          'Reads the httpOnly `crm_refresh` cookie, rotates it (the old one stops working) and returns a fresh access token. Replaying an old refresh token revokes the whole session.',
+        responses: {
+          '200': {
+            description: 'New access token',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/LoginResponse' } },
+            },
+          },
+          '401': {
+            description: 'Missing, expired or revoked refresh token',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
+          },
+        },
+      },
+    },
+    '/auth/logout': {
+      post: {
+        tags: ['Auth'],
+        summary: 'End the session',
+        description: 'Revokes the refresh token and clears the cookie. Always succeeds.',
+        responses: { '204': { description: 'Logged out' } },
+      },
+    },
     '/auth/login': {
       post: {
         tags: ['Auth'],
         summary: 'Log in with email and password',
+        description:
+          'Returns a short-lived access token (use as Bearer) and sets the httpOnly refresh cookie.',
         requestBody: {
           required: true,
           content: {

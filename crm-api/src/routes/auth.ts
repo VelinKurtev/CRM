@@ -8,6 +8,7 @@ import { HttpError } from '../lib/http-error.js'
 import { signToken } from '../lib/jwt.js'
 import { sendMail } from '../lib/mailer.js'
 import { prisma } from '../lib/prisma.js'
+import { endSession, rotateSession, startSession } from '../lib/session.js'
 import { authenticate } from '../middleware/authenticate.js'
 import { validateBody } from '../middleware/validate.js'
 
@@ -82,6 +83,7 @@ authRouter.post('/auth/register', validateBody(registerSchema), async (req, res)
       },
       include: { role: true },
     })
+    await startSession(res, user.id)
     res
       .status(201)
       .json({ token: signToken({ sub: user.id, role: user.role.name }), user: publicUser(user) })
@@ -99,7 +101,18 @@ authRouter.post('/auth/login', validateBody(loginSchema), async (req, res) => {
   const valid = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH)
   if (!user || !valid || !user.isActive) throw new HttpError(401, 'Invalid email or password')
 
+  await startSession(res, user.id)
   res.json({ token: signToken({ sub: user.id, role: user.role.name }), user: publicUser(user) })
+})
+
+authRouter.post('/auth/refresh', async (req, res) => {
+  const user = await rotateSession(req, res)
+  res.json({ token: signToken({ sub: user.id, role: user.role.name }), user: publicUser(user) })
+})
+
+authRouter.post('/auth/logout', async (req, res) => {
+  await endSession(req, res)
+  res.status(204).end()
 })
 
 authRouter.get('/auth/me', authenticate, async (req, res) => {
@@ -179,6 +192,11 @@ authRouter.post('/auth/reset-password', validateBody(resetSchema), async (req, r
     })
     if (count === 0) return false
     await tx.user.update({ where: { id: record.userId }, data: { passwordHash } })
+    // Everyone signed in with the old password is signed out.
+    await tx.refreshToken.updateMany({
+      where: { userId: record.userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    })
     return true
   })
   if (!claimed) throw new HttpError(400, 'This reset link is invalid or has expired')

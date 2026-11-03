@@ -21,3 +21,7 @@ export const forgotPassword = (email: string) =>
 
 export const resetPassword = (token: string, password: string) =>
   api.post<{ message: string }>('/auth/reset-password', { token, password }).then((r) => r.data)
+
+export const refreshSession = () => api.post<LoginResponse>('/auth/refresh').then((r) => r.data)
+
+export const logoutRequest = () => api.post('/auth/logout').then(() => undefined)

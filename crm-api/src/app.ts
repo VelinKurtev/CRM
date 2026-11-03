@@ -1,3 +1,4 @@
+import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express from 'express'
 import swaggerUi from 'swagger-ui-express'
@@ -10,7 +11,8 @@ import { healthRouter } from './routes/health.js'
 
 export const app = express()
 
-app.use(cors({ origin: config.CORS_ORIGIN }))
+app.use(cors({ origin: config.CORS_ORIGIN, credentials: true }))
+app.use(cookieParser())
 app.use(express.json())
 
 app.use('/api', healthRouter)

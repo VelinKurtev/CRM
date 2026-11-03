@@ -31,7 +31,7 @@ function renderAt(path: string) {
 }
 
 beforeEach(() => {
-  useAuthStore.getState().logout()
+  useAuthStore.setState({ token: null, user: null, initialized: true })
   vi.resetAllMocks()
 })
 

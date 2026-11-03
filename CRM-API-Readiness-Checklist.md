@@ -26,8 +26,8 @@ Legend: 🔴 should exist for Phase 1 to be considered done · 🟡 recommended 
 ## 3. Authentication & authorization
 
 - [x] 🔴 Passwords hashed with bcrypt or argon2 — never stored or logged in plain text
-- [ ] 🔴 JWT signed with a secret from env; access-token expiry configured
-- [ ] 🔴 Refresh-token or session strategy implemented per US-007
+- [x] 🔴 JWT signed with a secret from env; access-token expiry configured
+- [x] 🔴 Refresh-token or session strategy implemented per US-007
 - [x] 🔴 `authenticate` middleware protects all non-public routes
 - [ ] 🔴 RBAC middleware (`requireRole` / `requirePermission`) enforces Admin, Sales, Manager, Support access
 - [x] 🔴 Registration rejects duplicate emails (409) and validates input with Zod
@@ -70,8 +70,8 @@ Legend: 🔴 should exist for Phase 1 to be considered done · 🟡 recommended 
 
 ## 8. Frontend ↔ API integration
 
-- [ ] 🔴 `crm-app` axios client has a base URL from env, attaches the token and handles 401 (redirect to login / refresh)
-- [ ] 🔴 Protected routes in the React app redirect unauthenticated users
+- [x] 🔴 `crm-app` axios client has a base URL from env, attaches the token and handles 401 (redirect to login / refresh)
+- [x] 🔴 Protected routes in the React app redirect unauthenticated users
 - [ ] 🟡 Role-based UI: menu items and actions hidden when the role lacks permission
 - [ ] 🟡 API errors surface as toasts or form errors using the shared error shape
 

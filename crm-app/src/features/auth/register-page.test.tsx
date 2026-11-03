@@ -48,7 +48,7 @@ async function fill(overrides: Partial<Record<string, string>> = {}) {
 }
 
 beforeEach(() => {
-  useAuthStore.getState().logout()
+  useAuthStore.setState({ token: null, user: null, initialized: true })
   vi.resetAllMocks()
 })
 
