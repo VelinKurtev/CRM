@@ -19,7 +19,7 @@ export const openapi = {
     description: 'REST API for the CRM application.',
   },
   servers: [{ url: '/api' }],
-  tags: [{ name: 'System' }, { name: 'Auth' }, { name: 'Users' }],
+  tags: [{ name: 'System' }, { name: 'Auth' }, { name: 'Users' }, { name: 'Dashboard' }],
   paths: {
     '/health': {
       get: {
@@ -229,6 +229,33 @@ export const openapi = {
             description: 'Missing, invalid or expired token',
             content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
           },
+        },
+      },
+    },
+    '/dashboard/summary': {
+      get: {
+        tags: ['Dashboard'],
+        summary: 'Dashboard summary',
+        description:
+          'Sales overview, new leads and open deals. A section is `null` when the caller lacks read access (`deals:read` for sales and open deals, `leads:read` for leads).',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Summary figures',
+            content: {
+              'application/json': {
+                example: {
+                  sales: {
+                    wonThisMonth: { revenue: 42000, deals: 3 },
+                    wonLastMonthRevenue: 31000,
+                  },
+                  newLeads: { last7Days: 5, awaitingContact: 12 },
+                  openDeals: { count: 8, value: 96500 },
+                },
+              },
+            },
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
         },
       },
     },

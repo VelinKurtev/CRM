@@ -55,7 +55,7 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
 - [x] **US-011 – App layout**
   As a user, I want a Sidebar, Top Navbar, Breadcrumbs and Footer, so that I can navigate the CRM easily.
 
-- [ ] **US-012 – Dashboard summary**
+- [x] **US-012 – Dashboard summary**
   As a user, I want a dashboard showing sales overview, new leads and open deals, so that I see business status at a glance.
 
 - [ ] **US-013 – Dashboard revenue chart**
