@@ -6,6 +6,7 @@ import { audit } from '../lib/audit.js'
 import { HttpError } from '../lib/http-error.js'
 import { signToken } from '../lib/jwt.js'
 import { ROLES } from '../lib/permissions.js'
+import { httpUrl } from '../lib/validation.js'
 import { passwordSchema } from '../lib/password-schema.js'
 import { prisma } from '../lib/prisma.js'
 import { publicUser, userInclude } from '../lib/public-user.js'
@@ -15,11 +16,6 @@ import { requirePermission } from '../middleware/authorize.js'
 import { validateBody } from '../middleware/validate.js'
 
 export const usersRouter = Router()
-
-const httpUrl = z
-  .url('Enter a valid URL')
-  .max(500)
-  .refine((v) => /^https?:\/\//i.test(v), 'URL must start with http:// or https://')
 
 /** Email and role are deliberately not editable here. */
 const updateProfileSchema = z

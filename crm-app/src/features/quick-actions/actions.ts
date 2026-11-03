@@ -10,21 +10,29 @@ export type Field = {
   placeholder?: string
 }
 
-export type QuickAction = {
-  type: QuickRecord
+type ActionBase = {
   label: string
   /** Shown only to users with this permission. */
   permission: string
   icon: LucideIcon
+}
+
+/** Opens a page. */
+export type LinkAction = ActionBase & { type: 'contact'; to: string }
+
+/** Opens a small create dialog. */
+export type DialogAction = ActionBase & {
+  type: Exclude<QuickRecord, 'contact'>
   fields: Field[]
   schema: z.ZodType<Record<string, string>, Record<string, string>>
   /** Turn the form's strings into the API body: empty fields are left out. */
   toBody: (values: Record<string, string>) => Record<string, unknown>
 }
 
+export type QuickAction = LinkAction | DialogAction
+
 const required = (label: string) => z.string().trim().min(1, `${label} is required`)
 const optional = z.string().trim()
-const optionalEmail = z.union([z.literal(''), z.email('Enter a valid email')])
 const optionalAmount = z
   .string()
   .trim()
@@ -44,19 +52,8 @@ export const QUICK_ACTIONS: QuickAction[] = [
     label: 'Add contact',
     permission: 'contacts:write',
     icon: UserPlus,
-    fields: [
-      { name: 'firstName', label: 'First name' },
-      { name: 'lastName', label: 'Last name' },
-      { name: 'email', label: 'Email (optional)', type: 'email' },
-      { name: 'phone', label: 'Phone (optional)', type: 'tel' },
-    ],
-    schema: z.object({
-      firstName: required('First name'),
-      lastName: required('Last name'),
-      email: optionalEmail,
-      phone: optional,
-    }),
-    toBody: (v) => compact(v),
+    /** Contacts have a full form page rather than a quick dialog. */
+    to: '/contacts/new',
   },
   {
     type: 'lead',

@@ -11,6 +11,7 @@ import { logger } from './lib/logger.js'
 import { openapi } from './openapi.js'
 import { errorHandler, notFound } from './middleware/error-handler.js'
 import { authRouter } from './routes/auth.js'
+import { contactsRouter } from './routes/contacts.js'
 import { quickCreateRouter } from './routes/quick-create.js'
 import { dashboardRouter } from './routes/dashboard.js'
 import { usersRouter } from './routes/users.js'
@@ -52,6 +53,7 @@ app.use('/api', healthRouter)
 app.use('/api', authRouter)
 app.use('/api', usersRouter)
 app.use('/api', dashboardRouter)
+app.use('/api', contactsRouter)
 app.use('/api', quickCreateRouter)
 
 app.get('/api/openapi.json', (_req, res) => {

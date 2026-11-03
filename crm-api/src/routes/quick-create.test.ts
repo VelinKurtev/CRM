@@ -42,7 +42,6 @@ afterAll(async () => {
   await prisma.task.deleteMany({ where: { title: { startsWith: `qc-${stamp}` } } })
   await prisma.deal.deleteMany({ where: { title: { startsWith: `qc-${stamp}` } } })
   await prisma.lead.deleteMany({ where: { title: { startsWith: `qc-${stamp}` } } })
-  await prisma.contact.deleteMany({ where: { lastName: `qc-${stamp}` } })
   await prisma.user.deleteMany({ where: { email: { in: Object.values(emails) } } })
   await prisma.$disconnect()
 })
@@ -54,27 +53,10 @@ describe('quick-create endpoints', () => {
     }
   })
 
-  it('creates a contact owned by me', async () => {
-    const res = await post('sales', '/api/contacts', {
-      firstName: ' Ann ',
-      lastName: `qc-${stamp}`,
-      email: 'ann@example.com',
-    })
-    expect(res.status).toBe(201)
-    expect(res.body.contact).toMatchObject({ firstName: 'Ann', ownerId: ids.sales })
-  })
-
   it('validates input with field errors', async () => {
-    const res = await post('sales', '/api/contacts', {
-      firstName: '',
-      lastName: 'x',
-      email: 'nope',
-    })
+    const res = await post('sales', '/api/leads', { title: '  ' })
     expect(res.status).toBe(400)
-    expect(res.body.error.details).toMatchObject({
-      firstName: 'First name is required',
-      email: 'Enter a valid email',
-    })
+    expect(res.body.error.details).toMatchObject({ title: 'Title is required' })
     expect((await post('sales', '/api/deals', { title: 'x', amount: -5 })).status).toBe(400)
     expect((await post('sales', '/api/tasks', { title: 'x', dueDate: '31/12/2026' })).status).toBe(
       400,
@@ -118,10 +100,7 @@ describe('quick-create endpoints', () => {
     })
   })
 
-  it('follows role permissions: support can add tasks but not contacts, leads or deals', async () => {
-    expect((await post('support', '/api/contacts', { firstName: 'a', lastName: 'b' })).status).toBe(
-      403,
-    )
+  it('follows role permissions: support can add tasks but not leads or deals', async () => {
     expect((await post('support', '/api/leads', { title: 'a' })).status).toBe(403)
     expect((await post('support', '/api/deals', { title: 'a' })).status).toBe(403)
     expect((await post('support', '/api/tasks', { title: `qc-${stamp}-support` })).status).toBe(201)

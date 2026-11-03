@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AxiosError, type AxiosResponse } from 'axios'
+import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 
 import * as records from '@/services/records'
@@ -26,7 +27,9 @@ function setup(permissions = user.permissions) {
   queryClient = new QueryClient()
   render(
     <QueryClientProvider client={queryClient}>
-      <QuickActions />
+      <MemoryRouter>
+        <QuickActions />
+      </MemoryRouter>
     </QueryClientProvider>,
   )
 }
@@ -37,25 +40,29 @@ describe('QuickActions', () => {
   it('shows a button only for records the role may create', () => {
     setup(['tasks:write'])
     expect(screen.getByRole('button', { name: 'Add task' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Add contact' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Add contact' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Add deal' })).not.toBeInTheDocument()
   })
 
-  it('creates a contact, sending only filled fields, then refreshes the dashboard', async () => {
+  it('opens the full contact form instead of a dialog', () => {
+    setup()
+    expect(screen.getByRole('link', { name: 'Add contact' })).toHaveAttribute(
+      'href',
+      '/contacts/new',
+    )
+  })
+
+  it('creates a lead, sending only filled fields, then refreshes the dashboard', async () => {
     vi.mocked(records.createRecord).mockResolvedValue({})
     setup()
     const refresh = vi.spyOn(queryClient, 'invalidateQueries')
 
-    await userEvent.click(screen.getByRole('button', { name: 'Add contact' }))
-    await userEvent.type(screen.getByLabelText('First name'), ' Bob ')
-    await userEvent.type(screen.getByLabelText('Last name'), 'Ray')
+    await userEvent.click(screen.getByRole('button', { name: 'Add lead' }))
+    await userEvent.type(screen.getByLabelText('Title'), ' Website enquiry ')
     await userEvent.click(screen.getByRole('button', { name: 'Create' }))
 
     await waitFor(() =>
-      expect(records.createRecord).toHaveBeenCalledWith('contact', {
-        firstName: 'Bob',
-        lastName: 'Ray',
-      }),
+      expect(records.createRecord).toHaveBeenCalledWith('lead', { title: 'Website enquiry' }),
     )
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(refresh).toHaveBeenCalled()
@@ -63,13 +70,12 @@ describe('QuickActions', () => {
 
   it('validates before sending', async () => {
     setup()
-    await userEvent.click(screen.getByRole('button', { name: 'Add contact' }))
-    await userEvent.type(screen.getByLabelText('Email (optional)'), 'nope')
+    await userEvent.click(screen.getByRole('button', { name: 'Add deal' }))
+    await userEvent.type(screen.getByLabelText('Value in USD (optional)'), '-5')
     await userEvent.click(screen.getByRole('button', { name: 'Create' }))
 
-    expect(await screen.findByText('First name is required')).toBeInTheDocument()
-    expect(screen.getByText('Last name is required')).toBeInTheDocument()
-    expect(screen.getByText('Enter a valid email')).toBeInTheDocument()
+    expect(await screen.findByText('Title is required')).toBeInTheDocument()
+    expect(screen.getByText('Enter a valid amount')).toBeInTheDocument()
     expect(records.createRecord).not.toHaveBeenCalled()
   })
 

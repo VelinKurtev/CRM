@@ -52,7 +52,7 @@ Run these in `crm-api` or `crm-app`:
 | `npm run build` | Production build |
 | `npm run format` | Prettier |
 
-API only: `npm run db:migrate` (create a migration after editing `schema.prisma`), `npm run db:studio`
+API only: `npm run db:migrate` (create a migration after editing `schema.prisma`; then run `npx prisma generate`, because Prisma 7 no longer regenerates the client for you), `npm run db:studio`
 (browse the data), `npm run db:seed` (safe to run repeatedly).
 
 ## Tests

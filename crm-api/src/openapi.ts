@@ -351,7 +351,8 @@ export const openapi = {
       post: {
         tags: ['Records'],
         summary: 'Create contact',
-        description: 'Quick-create with the essential fields only. Requires `contacts:write`.',
+        description:
+          'Requires `contacts:write`. `company` is a name: an existing company (any letter case) is linked, otherwise a new one is created (needs `companies:write`). Tags are reused by name or created. `note` becomes the first note on the contact. The contact is owned by the caller.',
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
@@ -365,14 +366,57 @@ export const openapi = {
                   lastName: { type: 'string' },
                   email: { type: 'string', format: 'email' },
                   phone: { type: 'string' },
+                  jobTitle: { type: 'string' },
+                  company: { type: 'string' },
+                  address: { type: 'string' },
+                  city: { type: 'string' },
+                  postalCode: { type: 'string' },
+                  country: { type: 'string' },
+                  linkedinUrl: { type: 'string', format: 'uri' },
+                  twitterUrl: { type: 'string', format: 'uri' },
+                  facebookUrl: { type: 'string', format: 'uri' },
+                  tags: { type: 'array', items: { type: 'string' }, maxItems: 20 },
+                  note: { type: 'string' },
                 },
               },
             },
           },
         },
         responses: {
-          '201': { description: 'Created' },
+          '201': {
+            description: 'Created; the contact is returned with its company, tags and notes',
+          },
           '400': { description: 'Validation failed' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/companies': {
+      get: {
+        tags: ['Records'],
+        summary: 'Search companies',
+        description:
+          'Up to 20 companies whose name contains `q`, for suggestions. Requires `companies:read`.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'q', in: 'query', schema: { type: 'string' } }],
+        responses: {
+          '200': { description: '`{ companies: [{ id, name }] }`' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/tags': {
+      get: {
+        tags: ['Records'],
+        summary: 'Search tags',
+        description:
+          'Up to 20 tag names containing `q`, for suggestions. Requires `contacts:read`.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'q', in: 'query', schema: { type: 'string' } }],
+        responses: {
+          '200': { description: '`{ tags: [name] }`' },
           '401': { $ref: '#/components/responses/Unauthorized' },
           '403': { $ref: '#/components/responses/Forbidden' },
         },

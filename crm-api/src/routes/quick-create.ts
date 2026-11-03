@@ -17,24 +17,6 @@ const optionalText = (max = 200) => z.string().trim().max(max).optional()
 /** A calendar date from a date input; tasks are due at the end of that day. */
 const endOfDay = (d: string) => new Date(`${d}T23:59:59.999Z`)
 
-const contactSchema = z.object({
-  firstName: text('First name', 100),
-  lastName: text('Last name', 100),
-  email: z.email('Enter a valid email').max(200).optional(),
-  phone: optionalText(50),
-})
-
-quickCreateRouter.post(
-  '/contacts',
-  requirePermission('contacts:write'),
-  validateBody(contactSchema),
-  async (req, res) => {
-    const data = req.body as z.infer<typeof contactSchema>
-    const contact = await prisma.contact.create({ data: { ...data, ownerId: req.auth!.userId } })
-    res.status(201).json({ contact })
-  },
-)
-
 const leadSchema = z.object({ title: text('Title'), source: optionalText(100) })
 
 quickCreateRouter.post(

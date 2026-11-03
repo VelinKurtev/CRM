@@ -16,14 +16,14 @@ import {
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
 import { createRecord } from '@/services/records'
-import type { QuickAction } from './actions'
+import type { DialogAction } from './actions'
 
 export function QuickCreateDialog({
   action,
   open,
   onOpenChange,
 }: {
-  action: QuickAction
+  action: DialogAction
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {

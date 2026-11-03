@@ -16,6 +16,8 @@ const env = z
     RESET_TOKEN_TTL_MINUTES: z.coerce.number().default(60),
     REFRESH_TOKEN_TTL_DAYS: z.coerce.number().default(7),
     NODE_ENV: z.string().default('development'),
+    /** pino level; defaults to `info`, or `silent` under test. */
+    LOG_LEVEL: z.string().optional(),
     // Credentialed requests: a wildcard origin is not allowed.
     CORS_ORIGIN: z
       .string()

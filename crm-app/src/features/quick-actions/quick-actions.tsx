@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
 import { usePermission } from '@/hooks/use-permission'
@@ -9,6 +10,15 @@ function QuickActionButton({ action }: { action: QuickAction }) {
   const [open, setOpen] = useState(false)
   const allowed = usePermission(action.permission)
   if (!allowed) return null
+  if ('to' in action) {
+    return (
+      <Button asChild variant="outline" size="sm">
+        <Link to={action.to}>
+          <action.icon /> {action.label}
+        </Link>
+      </Button>
+    )
+  }
   return (
     <>
       <Button variant="outline" size="sm" onClick={() => setOpen(true)}>

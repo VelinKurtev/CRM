@@ -71,7 +71,7 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
 
 ## Phase 3 – Contacts & Companies
 
-- [ ] **US-016 – Create contact**
+- [x] **US-016 – Create contact**
   As a Sales user, I want to create a contact with name, company, email, phone, address, tags, notes and social links, so that customer data is stored.
 
 - [ ] **US-017 – Edit and delete contact**
