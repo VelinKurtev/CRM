@@ -16,7 +16,7 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
   - [x] Base entities and migrations exist (Users, Roles, Permissions, Companies, Contacts, Leads, Deals, Activities, Tasks, CalendarEvents, Notes, Documents, Emails, Notifications, Tags, Pipelines, Stages, AuditLogs).
   - [x] Health-check endpoint responds.
 
-- [ ] **US-003 – Shared UI component library**
+- [x] **US-003 – Shared UI component library**
   As a developer, I want reusable UI components (Button, Modal, Table, Card, Form, Input, Select, Date Picker, Avatar, Badge, Tabs, Pagination, Search, Filters, Toast, Skeleton Loader, Empty State), so that screens look and behave consistently.
 
 ---
