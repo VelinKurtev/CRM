@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import { AppLayout } from '@/components/layout/app-layout'
+import { ContactsPage } from '@/features/contacts/contacts-page'
 import { EditContactPage } from '@/features/contacts/edit-contact-page'
 import { NewContactPage } from '@/features/contacts/new-contact-page'
 import { UsersPage } from '@/features/admin/users-page'
@@ -30,19 +31,27 @@ export const routes = [
           { path: '/dashboard', element: <DashboardPage />, handle: { crumb: 'Dashboard' } },
           { path: '/profile', element: <ProfilePage />, handle: { crumb: 'My profile' } },
           {
-            element: <RequirePermission permission="contacts:write" />,
+            element: <RequirePermission permission="contacts:read" />,
             children: [
               {
                 path: '/contacts',
                 handle: { crumb: 'Contacts' },
                 children: [
-                  // The contact list (US-018) will replace this redirect.
-                  { index: true, element: <Navigate to="/contacts/new" replace /> },
-                  { path: 'new', element: <NewContactPage />, handle: { crumb: 'New contact' } },
+                  { index: true, element: <ContactsPage /> },
                   {
-                    path: ':id/edit',
-                    element: <EditContactPage />,
-                    handle: { crumb: 'Edit contact' },
+                    element: <RequirePermission permission="contacts:write" />,
+                    children: [
+                      {
+                        path: 'new',
+                        element: <NewContactPage />,
+                        handle: { crumb: 'New contact' },
+                      },
+                      {
+                        path: ':id/edit',
+                        element: <EditContactPage />,
+                        handle: { crumb: 'Edit contact' },
+                      },
+                    ],
                   },
                 ],
               },

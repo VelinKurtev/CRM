@@ -348,6 +348,37 @@ export const openapi = {
       },
     },
     '/contacts': {
+      get: {
+        tags: ['Records'],
+        summary: 'List contacts',
+        description:
+          'Requires `contacts:read`. `q` matches name, email, phone, job title or company name: every word must match somewhere, so "bob acme" finds Bob at Acme. Filters combine with AND. Sorted by `sort`/`dir` with a stable tie-break, so pages never overlap.',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'q', in: 'query', schema: { type: 'string' } },
+          { name: 'company', in: 'query', schema: { type: 'string' }, description: 'Company id' },
+          { name: 'tag', in: 'query', schema: { type: 'string' }, description: 'Tag name' },
+          { name: 'owner', in: 'query', schema: { type: 'string', enum: ['me'] } },
+          {
+            name: 'sort',
+            in: 'query',
+            schema: { type: 'string', enum: ['name', 'company', 'createdAt'], default: 'name' },
+          },
+          {
+            name: 'dir',
+            in: 'query',
+            schema: { type: 'string', enum: ['asc', 'desc'], default: 'asc' },
+          },
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'pageSize', in: 'query', schema: { type: 'integer', default: 20, maximum: 100 } },
+        ],
+        responses: {
+          '200': { description: '`{ contacts, total, page, pageSize }`' },
+          '400': { description: 'Invalid query' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
       post: {
         tags: ['Records'],
         summary: 'Create contact',
@@ -453,9 +484,12 @@ export const openapi = {
         tags: ['Records'],
         summary: 'Search companies',
         description:
-          'Up to 20 companies whose name contains `q`, for suggestions. Requires `companies:read`.',
+          'Companies whose name contains `q`, for suggestions and filters (default 20, up to `limit` 100). Requires `companies:read`.',
         security: [{ bearerAuth: [] }],
-        parameters: [{ name: 'q', in: 'query', schema: { type: 'string' } }],
+        parameters: [
+          { name: 'q', in: 'query', schema: { type: 'string' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20, maximum: 100 } },
+        ],
         responses: {
           '200': { description: '`{ companies: [{ id, name }] }`' },
           '401': { $ref: '#/components/responses/Unauthorized' },
@@ -468,9 +502,12 @@ export const openapi = {
         tags: ['Records'],
         summary: 'Search tags',
         description:
-          'Up to 20 tag names containing `q`, for suggestions. Requires `contacts:read`.',
+          'Tag names containing `q`, for suggestions and filters (default 20, up to `limit` 100). Requires `contacts:read`.',
         security: [{ bearerAuth: [] }],
-        parameters: [{ name: 'q', in: 'query', schema: { type: 'string' } }],
+        parameters: [
+          { name: 'q', in: 'query', schema: { type: 'string' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 20, maximum: 100 } },
+        ],
         responses: {
           '200': { description: '`{ tags: [name] }`' },
           '401': { $ref: '#/components/responses/Unauthorized' },

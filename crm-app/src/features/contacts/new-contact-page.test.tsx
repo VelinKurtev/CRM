@@ -20,7 +20,7 @@ const user = {
   firstName: 'Ann',
   lastName: 'Lee',
   avatarUrl: null,
-  permissions: ['contacts:write'],
+  permissions: ['contacts:read', 'contacts:write'],
   role: 'SALES' as const,
 }
 

@@ -1,5 +1,5 @@
 import type { RequestHandler } from 'express'
-import type { ZodType } from 'zod'
+import type { z, ZodType } from 'zod'
 
 import { HttpError } from '../lib/http-error.js'
 
@@ -17,3 +17,15 @@ export const validateBody =
     req.body = result.data
     next()
   }
+
+/** Parse `req.query` against a Zod schema, or throw a 400 with per-field errors. */
+export function parseQuery<T extends ZodType>(schema: T, query: unknown): z.infer<T> {
+  const result = schema.safeParse(query)
+  if (!result.success) {
+    const fields = Object.fromEntries(
+      result.error.issues.map((i) => [i.path.join('.') || '_', i.message]),
+    )
+    throw new HttpError(400, 'Invalid query', fields)
+  }
+  return result.data
+}

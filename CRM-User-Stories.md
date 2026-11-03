@@ -77,7 +77,7 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
 - [x] **US-017 – Edit and delete contact**
   As a Sales user, I want to edit or delete a contact, so that data stays accurate.
 
-- [ ] **US-018 – List, search and filter contacts**
+- [x] **US-018 – List, search and filter contacts**
   As a user, I want to search and filter contacts in a paginated table, so that I can find people quickly.
 
 - [ ] **US-019 – Import contacts from CSV**

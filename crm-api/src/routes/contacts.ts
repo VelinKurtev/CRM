@@ -7,7 +7,7 @@ import { prisma } from '../lib/prisma.js'
 import { httpUrl, optionalText, requiredText } from '../lib/validation.js'
 import { authenticate } from '../middleware/authenticate.js'
 import { getPermissions, requirePermission } from '../middleware/authorize.js'
-import { validateBody } from '../middleware/validate.js'
+import { parseQuery, validateBody } from '../middleware/validate.js'
 
 export const contactsRouter = Router()
 
@@ -113,6 +113,90 @@ const mayDelete = (permissions: Set<string>, contact: { ownerId: string | null }
 
 const idOf = (req: { params: Record<string, string | string[] | undefined> }) =>
   req.params.id as string
+
+// ───────── List, search and filter ─────────
+
+const listQuerySchema = z.object({
+  /** Every word must match the name, email, phone, job title or company name. */
+  q: z.string().trim().max(100).default(''),
+  /** Company id. */
+  company: z.string().trim().min(1).optional(),
+  /** Tag name. */
+  tag: z.string().trim().min(1).optional(),
+  /** `me`: only contacts I own. */
+  owner: z.enum(['me']).optional(),
+  sort: z.enum(['name', 'company', 'createdAt']).default('name'),
+  dir: z.enum(['asc', 'desc']).default('asc'),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+})
+
+contactsRouter.get('/contacts', requirePermission('contacts:read'), async (req, res) => {
+  const { q, company, tag, owner, sort, dir, page, pageSize } = parseQuery(
+    listQuerySchema,
+    req.query,
+  )
+
+  const contains = (value: string) => ({ contains: value, mode: 'insensitive' as const })
+  const where: Prisma.ContactWhereInput = {
+    // "bob ray" finds Bob Ray: each word may match any field, but all words must match.
+    AND: q
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((word) => ({
+        OR: [
+          { firstName: contains(word) },
+          { lastName: contains(word) },
+          { email: contains(word) },
+          { phone: contains(word) },
+          { jobTitle: contains(word) },
+          { company: { name: contains(word) } },
+        ],
+      })),
+    companyId: company,
+    ownerId: owner === 'me' ? req.auth!.userId : undefined,
+    tags: tag ? { some: { tag: { name: { equals: tag, mode: 'insensitive' } } } } : undefined,
+  }
+
+  const orderBy: Prisma.ContactOrderByWithRelationInput[] =
+    sort === 'name'
+      ? [{ lastName: dir }, { firstName: dir }]
+      : sort === 'company'
+        ? [{ company: { name: dir } }, { lastName: 'asc' }]
+        : [{ createdAt: dir }]
+
+  const [total, contacts] = await Promise.all([
+    prisma.contact.count({ where }),
+    prisma.contact.findMany({
+      where,
+      orderBy: [...orderBy, { id: 'asc' }], // a stable order keeps pages from overlapping
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        jobTitle: true,
+        createdAt: true,
+        company: { select: { id: true, name: true } },
+        owner: { select: { id: true, firstName: true, lastName: true } },
+        tags: { select: { tag: { select: { name: true } } } },
+      },
+    }),
+  ])
+
+  res.json({
+    contacts: contacts.map(({ tags, ...c }) => ({
+      ...c,
+      tags: tags.map((t) => t.tag.name).sort(),
+    })),
+    total,
+    page,
+    pageSize,
+  })
+})
 
 // ───────── Create ─────────
 
@@ -261,25 +345,29 @@ contactsRouter.delete('/contacts/:id', authenticate, async (req, res) => {
 
 // ───────── Suggestions for the create form ─────────
 
-const suggestionQuery = z.object({ q: z.string().trim().max(100).default('') })
+const suggestionQuery = z.object({
+  q: z.string().trim().max(100).default(''),
+  /** Suggestions stay short; filter dropdowns ask for more. */
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+})
 
 contactsRouter.get('/companies', requirePermission('companies:read'), async (req, res) => {
-  const { q } = suggestionQuery.parse(req.query)
+  const { q, limit } = parseQuery(suggestionQuery, req.query)
   const companies = await prisma.company.findMany({
     where: q ? { name: { contains: q, mode: 'insensitive' } } : {},
     orderBy: { name: 'asc' },
-    take: 20,
+    take: limit,
     select: { id: true, name: true },
   })
   res.json({ companies })
 })
 
 contactsRouter.get('/tags', requirePermission('contacts:read'), async (req, res) => {
-  const { q } = suggestionQuery.parse(req.query)
+  const { q, limit } = parseQuery(suggestionQuery, req.query)
   const tags = await prisma.tag.findMany({
     where: q ? { name: { contains: q, mode: 'insensitive' } } : {},
     orderBy: { name: 'asc' },
-    take: 20,
+    take: limit,
     select: { name: true },
   })
   res.json({ tags: tags.map((t) => t.name) })
