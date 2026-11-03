@@ -27,9 +27,9 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
   As a user, I want to log in with email and password, so that I can access the CRM.
   - [x] Valid credentials return a JWT and redirect to the dashboard; invalid ones show an error.
 
-- [ ] **US-005 – Register**
+- [x] **US-005 – Register**
   As a new user, I want to register an account, so that I can be granted access.
-  - [ ] Form is validated with Zod; duplicate emails are rejected.
+  - [x] Form is validated with Zod; duplicate emails are rejected.
 
 - [ ] **US-006 – Forgot / reset password**
   As a user, I want to reset my password via an emailed link, so that I can regain access.

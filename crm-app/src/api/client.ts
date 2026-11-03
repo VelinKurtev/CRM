@@ -32,3 +32,9 @@ export function getErrorMessage(error: unknown, fallback = 'Something went wrong
   }
   return fallback
 }
+
+/** Per-field errors from a 400/409 response, e.g. `{ email: 'Already exists' }`. */
+export function getFieldErrors(error: unknown): Record<string, string> {
+  if (axios.isAxiosError(error)) return error.response?.data?.error?.details ?? {}
+  return {}
+}

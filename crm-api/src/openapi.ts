@@ -36,6 +36,41 @@ export const openapi = {
         },
       },
     },
+    '/auth/register': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Register a new account',
+        description:
+          'Creates a user with the default (least-privilege) SUPPORT role and returns a session, like login.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/RegisterRequest' },
+              example: {
+                firstName: 'Ann',
+                lastName: 'Lee',
+                email: 'ann@example.com',
+                password: 'Secret123',
+              },
+            },
+          },
+        },
+        responses: {
+          '201': {
+            description: 'Account created',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/LoginResponse' } },
+            },
+          },
+          '400': { $ref: '#/components/responses/ValidationError' },
+          '409': {
+            description: 'Email already registered',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
+          },
+        },
+      },
+    },
     '/auth/login': {
       post: {
         tags: ['Auth'],
@@ -120,6 +155,20 @@ export const openapi = {
           firstName: { type: 'string' },
           lastName: { type: 'string' },
           role: { type: 'string', enum: ['ADMIN', 'SALES', 'MANAGER', 'SUPPORT'] },
+        },
+      },
+      RegisterRequest: {
+        type: 'object',
+        required: ['firstName', 'lastName', 'email', 'password'],
+        properties: {
+          firstName: { type: 'string' },
+          lastName: { type: 'string' },
+          email: { type: 'string', format: 'email' },
+          password: {
+            type: 'string',
+            minLength: 8,
+            description: 'At least 8 characters with upper-case, lower-case and a number',
+          },
         },
       },
       LoginRequest: {

@@ -30,7 +30,7 @@ Legend: 🔴 should exist for Phase 1 to be considered done · 🟡 recommended 
 - [ ] 🔴 Refresh-token or session strategy implemented per US-007
 - [x] 🔴 `authenticate` middleware protects all non-public routes
 - [ ] 🔴 RBAC middleware (`requireRole` / `requirePermission`) enforces Admin, Sales, Manager, Support access
-- [ ] 🔴 Registration rejects duplicate emails (409) and validates input with Zod
+- [x] 🔴 Registration rejects duplicate emails (409) and validates input with Zod
 - [ ] 🔴 Password reset tokens are single-use and expire
 - [x] 🟡 Inactive users (`isActive = false`) cannot log in
 - [x] 🟡 Login does not reveal whether the email or the password was wrong

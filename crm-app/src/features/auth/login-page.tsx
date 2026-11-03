@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 
 import { getErrorMessage } from '@/api/client'
@@ -98,6 +98,12 @@ export function LoginPage() {
               <Button type="submit" disabled={mutation.isPending}>
                 {mutation.isPending ? 'Signing in…' : 'Sign in'}
               </Button>
+              <p className="text-center text-sm text-muted-foreground">
+                No account yet?{' '}
+                <Link to="/register" className="text-foreground underline">
+                  Register
+                </Link>
+              </p>
             </form>
           </Form>
         </CardContent>
