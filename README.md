@@ -86,6 +86,12 @@ current search and filters (not just the visible page) as a CSV, up to 10,000 at
 format, so an export can be edited and imported elsewhere. Notes are not included, and every export is
 recorded in the audit log.
 
+## Tags
+
+Tag contacts on their form, then filter the list by one or more tags (any or all), or click a tag in the list.
+Tick rows to add or remove tags on many contacts at once. Managers and admins get a **Tags** page to rename,
+recolour or delete tags.
+
 ## Wiki
 
 The project wiki is written in `docs/wiki/` (reviewed with the code). A workflow (`.github/workflows/wiki.yml`)

@@ -14,6 +14,7 @@ single source of truth is `crm-api/src/lib/permissions.ts`, which is synced to t
 | `notes` | read, write, delete | read, write, delete | read, write, delete | read, write |
 | `documents` | read, write, delete | read, write, delete | read, write | read |
 | `emails` | read, write, delete | read, write, delete | read, write | read, write |
+| `tags` | manage | manage | — | — |
 | `reports` | read | read | — | — |
 | `users` | read, manage | read | — | — |
 | `audit` | read | — | — | — |

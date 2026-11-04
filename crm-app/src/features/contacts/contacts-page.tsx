@@ -1,5 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { ArrowDown, ArrowUp, ArrowUpDown, Plus, Upload, Users } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { getErrorMessage } from '@/api/client'
@@ -23,10 +24,13 @@ import { usePermission } from '@/hooks/use-permission'
 import {
   listCompanies,
   listContacts,
-  listTags,
+  listTagDetails,
   type ContactListParams,
   type ContactSort,
 } from '@/services/contacts'
+import { BulkTagDialog } from '@/features/tags/bulk-tag-dialog'
+import { TagBadge } from '@/features/tags/tag-badge'
+import { TagFilter } from '@/features/tags/tag-filter'
 import { ExportMenu } from './export-menu'
 
 const PAGE_SIZE = 20
@@ -35,8 +39,8 @@ const MAX_TAGS_SHOWN = 3
 /** Everything the list shows is in the URL, so refresh, back and shared links keep it. */
 function readParams(
   sp: URLSearchParams,
-): Required<Pick<ContactListParams, 'q' | 'page' | 'sort' | 'dir'>> &
-  Pick<ContactListParams, 'company' | 'tag' | 'owner'> {
+): Required<Pick<ContactListParams, 'q' | 'page' | 'sort' | 'dir' | 'tag'>> &
+  Pick<ContactListParams, 'company' | 'tagMode' | 'owner'> {
   const sort = sp.get('sort')
   const page = Number(sp.get('page'))
   return {
@@ -45,7 +49,8 @@ function readParams(
     sort: sort === 'company' || sort === 'createdAt' ? sort : 'name',
     dir: sp.get('dir') === 'desc' ? 'desc' : 'asc',
     company: sp.get('company') ?? undefined,
-    tag: sp.get('tag') ?? undefined,
+    tag: sp.getAll('tag').filter(Boolean),
+    tagMode: sp.get('tagMode') === 'all' ? 'all' : undefined,
     owner: sp.get('owner') === 'me' ? 'me' : undefined,
   }
 }
@@ -84,19 +89,25 @@ export function ContactsPage() {
   const params = readParams(searchParams)
   const canWrite = usePermission('contacts:write')
 
-  const update = (changes: Record<string, string | undefined>, resetPage = true) =>
+  // Ticked rows are for the page you are looking at: any change of page or filters drops them.
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [bulkMode, setBulkMode] = useState<'add' | 'remove' | null>(null)
+
+  const update = (changes: Record<string, string | string[] | undefined>, resetPage = true) => {
+    setSelected(new Set())
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev)
         for (const [key, value] of Object.entries(changes)) {
-          if (value) next.set(key, value)
-          else next.delete(key)
+          next.delete(key)
+          for (const v of [value ?? []].flat()) if (v) next.append(key, v)
         }
         if (resetPage) next.delete('page')
         return next
       },
       { replace: true },
     )
+  }
 
   const { data, isPending, isError, error, isPlaceholderData } = useQuery({
     queryKey: ['contacts', params],
@@ -105,7 +116,13 @@ export function ContactsPage() {
   })
 
   // Dropdown options. A role that can't read companies just doesn't get that filter.
-  const tags = useQuery({ queryKey: ['contact-filter-tags'], queryFn: listTags, staleTime: 60_000 })
+  const tags = useQuery({
+    queryKey: ['tag-details'],
+    queryFn: () => listTagDetails(),
+    staleTime: 60_000,
+    retry: false,
+  })
+  const tagColors = new Map(tags.data?.map((t) => [t.name.toLowerCase(), t.color]))
   const companies = useQuery({
     queryKey: ['contact-filter-companies'],
     queryFn: listCompanies,
@@ -124,12 +141,14 @@ export function ContactsPage() {
           },
         ]
       : []),
-    ...(tags.data?.length
-      ? [{ key: 'tag', label: 'Tag', options: tags.data.map((t) => ({ value: t, label: t })) }]
-      : []),
   ]
 
-  const filtering = Boolean(params.q || params.company || params.tag || params.owner)
+  const filtering = Boolean(params.q || params.company || params.tag.length || params.owner)
+  /** Clicking a tag in the list adds it to the tag filter (it stays if already there). */
+  const filterByTag = (tag: string) => {
+    if (params.tag.some((t) => t.toLowerCase() === tag.toLowerCase())) return
+    update({ tag: [...params.tag, tag], tagMode: params.tagMode })
+  }
   const onSort = (field: ContactSort) =>
     update({
       sort: field === 'name' && params.sort !== 'name' ? undefined : field,
@@ -158,6 +177,7 @@ export function ContactsPage() {
                 q: params.q || undefined,
                 company: params.company,
                 tag: params.tag,
+                tagMode: params.tagMode,
                 owner: params.owner,
               }}
               total={data?.total}
@@ -189,10 +209,52 @@ export function ContactsPage() {
         />
         <Filters
           filters={filters}
-          values={{ owner: params.owner, company: params.company, tag: params.tag }}
-          onChange={(v) => update({ owner: v.owner, company: v.company, tag: v.tag })}
+          values={{ owner: params.owner, company: params.company }}
+          extraActive={params.tag.length > 0}
+          onChange={(v) =>
+            // "Clear" sends no values at all, and should drop the tags too.
+            update(
+              Object.keys(v).length === 0
+                ? { owner: undefined, company: undefined, tag: undefined, tagMode: undefined }
+                : { owner: v.owner, company: v.company },
+            )
+          }
+        />
+        <TagFilter
+          options={tags.data?.map((t) => t.name) ?? []}
+          value={params.tag}
+          mode={params.tagMode ?? 'any'}
+          onChange={(tag, mode) =>
+            update({ tag, tagMode: tag.length > 1 && mode === 'all' ? 'all' : undefined })
+          }
         />
       </div>
+
+      {canWrite && selected.size > 0 && (
+        <div
+          role="region"
+          aria-label="Selected contacts"
+          className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/50 px-3 py-2"
+        >
+          <span className="text-sm font-medium">{selected.size} selected</span>
+          <Button size="sm" variant="outline" onClick={() => setBulkMode('add')}>
+            Add tags
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setBulkMode('remove')}>
+            Remove tags
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+            Clear selection
+          </Button>
+        </div>
+      )}
+      <BulkTagDialog
+        mode={bulkMode ?? 'add'}
+        contactIds={[...selected]}
+        open={bulkMode !== null}
+        onOpenChange={(open) => !open && setBulkMode(null)}
+        onDone={() => setSelected(new Set())}
+      />
 
       {isError ? (
         <p role="alert" className="text-sm text-destructive">
@@ -234,6 +296,15 @@ export function ContactsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                {canWrite && (
+                  <TableHead className="w-10">
+                    <SelectAll
+                      ids={data.contacts.map((c) => c.id)}
+                      selected={selected}
+                      onChange={setSelected}
+                    />
+                  </TableHead>
+                )}
                 <SortHeader
                   label="Name"
                   field="name"
@@ -258,7 +329,24 @@ export function ContactsPage() {
               {data.contacts.map((c) => {
                 const name = `${c.firstName} ${c.lastName}`
                 return (
-                  <TableRow key={c.id}>
+                  <TableRow key={c.id} data-state={selected.has(c.id) ? 'selected' : undefined}>
+                    {canWrite && (
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${name}`}
+                          checked={selected.has(c.id)}
+                          onChange={(e) =>
+                            setSelected((prev) => {
+                              const next = new Set(prev)
+                              if (e.target.checked) next.add(c.id)
+                              else next.delete(c.id)
+                              return next
+                            })
+                          }
+                        />
+                      </TableCell>
+                    )}
                     <TableCell>
                       {canWrite ? (
                         <Link to={`/contacts/${c.id}/edit`} className="font-medium hover:underline">
@@ -288,9 +376,12 @@ export function ContactsPage() {
                       ) : (
                         <div className="flex flex-wrap gap-1">
                           {c.tags.slice(0, MAX_TAGS_SHOWN).map((t) => (
-                            <Badge key={t} variant="secondary">
-                              {t}
-                            </Badge>
+                            <TagBadge
+                              key={t}
+                              name={t}
+                              color={tagColors.get(t.toLowerCase())}
+                              onClick={() => filterByTag(t)}
+                            />
                           ))}
                           {c.tags.length > MAX_TAGS_SHOWN && (
                             <Badge
@@ -324,6 +415,34 @@ export function ContactsPage() {
         </div>
       )}
     </div>
+  )
+}
+
+/** The header checkbox: ticks or unticks every row on the page. */
+function SelectAll({
+  ids,
+  selected,
+  onChange,
+}: {
+  ids: string[]
+  selected: Set<string>
+  onChange: (next: Set<string>) => void
+}) {
+  const ref = useRef<HTMLInputElement>(null)
+  const count = ids.filter((id) => selected.has(id)).length
+  const all = ids.length > 0 && count === ids.length
+  useEffect(() => {
+    if (ref.current) ref.current.indeterminate = count > 0 && !all
+  }, [count, all])
+
+  return (
+    <input
+      ref={ref}
+      type="checkbox"
+      aria-label="Select all contacts on this page"
+      checked={all}
+      onChange={() => onChange(all ? new Set() : new Set(ids))}
+    />
   )
 }
 

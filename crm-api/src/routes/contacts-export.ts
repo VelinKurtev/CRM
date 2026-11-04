@@ -69,7 +69,8 @@ contactsExportRouter.get(
         rows: total,
         q: query.q || null,
         company: query.company ?? null,
-        tag: query.tag ?? null,
+        tag: query.tag.length ? query.tag.join('; ') : null,
+        tagMode: query.tag.length > 1 ? query.tagMode : null,
         owner: query.owner ?? null,
       },
     })

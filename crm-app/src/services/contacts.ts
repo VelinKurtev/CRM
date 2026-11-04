@@ -86,7 +86,9 @@ export type ContactSort = 'name' | 'company' | 'createdAt'
 export type ContactListParams = {
   q?: string
   company?: string
-  tag?: string
+  /** Tag names; with several, `tagMode` decides between any of them and all of them. */
+  tag?: string[]
+  tagMode?: 'any' | 'all'
   owner?: 'me'
   sort?: ContactSort
   dir?: 'asc' | 'desc'
@@ -114,12 +116,40 @@ export type ContactsPage = {
   pageSize: number
 }
 
-export const listContacts = (params: ContactListParams) =>
-  api.get<ContactsPage>('/contacts', { params }).then((r) => r.data)
+/** Repeat array params (`tag=a&tag=b`) instead of axios's default `tag[]=a`. */
+const repeatArrays = { indexes: null } as const
 
-/** Options for the filter dropdowns (the API caps these at 100). */
-export const listTags = () =>
-  api.get<{ tags: string[] }>('/tags', { params: { limit: 100 } }).then((r) => r.data.tags)
+export const listContacts = (params: ContactListParams) =>
+  api.get<ContactsPage>('/contacts', { params, paramsSerializer: repeatArrays }).then((r) => r.data)
+
+export type TagDetail = {
+  id: string
+  name: string
+  /** `#rrggbb`, or null for the default look. */
+  color: string | null
+  contactCount: number
+  /** Contacts, companies, leads and deals that carry the tag. */
+  usageCount: number
+}
+
+/** Every tag with its colour and usage: filter options, badge colours and the tags page. */
+export const listTagDetails = (q = '') =>
+  api
+    .get<{ tags: TagDetail[] }>('/tags/details', { params: { q: q || undefined, limit: 500 } })
+    .then((r) => r.data.tags)
+
+export const updateTag = (id: string, body: { name?: string; color?: string | null }) =>
+  api
+    .patch<{ tag: Pick<TagDetail, 'id' | 'name' | 'color'> }>(`/tags/${id}`, body)
+    .then((r) => r.data.tag)
+
+export const deleteTag = (id: string) => api.delete(`/tags/${id}`).then(() => undefined)
+
+export type BulkTagsRequest = { contactIds: string[]; add?: string[]; remove?: string[] }
+
+/** Add and/or remove tags on several contacts at once. */
+export const bulkTagContacts = (body: BulkTagsRequest) =>
+  api.post<{ updated: number; skipped: number }>('/contacts/bulk-tags', body).then((r) => r.data)
 
 export const listCompanies = () =>
   api
@@ -151,7 +181,10 @@ export const importContacts = (csv: string, dryRun: boolean) =>
     })
     .then((r) => r.data)
 
-export type ExportParams = Pick<ContactListParams, 'q' | 'company' | 'tag' | 'owner'> & {
+export type ExportParams = Pick<
+  ContactListParams,
+  'q' | 'company' | 'tag' | 'tagMode' | 'owner'
+> & {
   /** Semicolons suit Excel in many European locales. */
   delimiter: 'comma' | 'semicolon'
 }
@@ -159,7 +192,7 @@ export type ExportParams = Pick<ContactListParams, 'q' | 'company' | 'tag' | 'ow
 /** Every contact matching the filters (not one page) as a CSV file. Needs `contacts:export`. */
 export const exportContacts = (params: ExportParams) =>
   api
-    .get<Blob>('/contacts/export', { params, responseType: 'blob' })
+    .get<Blob>('/contacts/export', { params, paramsSerializer: repeatArrays, responseType: 'blob' })
     .then((r) => r.data)
     .catch(async (error: unknown) => {
       // An error body arrives as a Blob too; turn it back into JSON so its message can be shown.

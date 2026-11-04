@@ -17,9 +17,26 @@ email, phone, job title, company, address, city, postal code, country, LinkedIn 
 
 - **Search** matches name, email, phone, job title and company. Every word must match somewhere, in any order:
   "bob acme" finds Bob at Acme.
-- **Filters:** owner (My contacts), company, tag. They combine.
+- **Filters:** owner (My contacts), company and tags. They combine. Pick several tags and choose whether a contact
+  needs *any* of them or *all* of them. Clicking a tag on a row adds it to the filter.
+  The export uses the same filters.
 - **Sort** by name or company (click the column header again to reverse). 20 per page.
 - Search, filters, sort and page are kept in the address, so you can refresh, go back, or share the link.
+
+## Tags
+
+Tags group contacts. Type a tag on the contact form (Enter or comma); existing tags are reused whatever their case, and
+a contact can have up to 20.
+
+- **Filter:** the **Tags** button on the list, or click any tag in a row. With two or more tags, choose *any* or *all*.
+- **Tag many at once** (needs `contacts:write`): tick rows (or the header box for the whole page), then **Add tags** or
+  **Remove tags**. Up to 500 contacts at a time. It is all or nothing: if a contact would end up over 20 tags,
+  nothing changes. The selection is dropped when you change the page or filters.
+- **Manage tags** (needs `tags:manage`: Managers and Admins): the **Tags** page in the sidebar lists every tag with how
+  many contacts and records use it. Rename it, give it a colour (shown on its badges everywhere), or delete it. A
+  rename or delete applies to every record that uses the tag; deleting removes the tag but keeps the records. Renaming
+  to a name another tag already has is refused.
+- Bulk tagging, renames and deletes are recorded in the audit log.
 
 ## Edit and delete
 

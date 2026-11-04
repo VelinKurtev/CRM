@@ -20,6 +20,7 @@ export const PERMISSIONS = [
   ...CRM_ENTITIES.flatMap((e) => [`${e}:read`, `${e}:write`, `${e}:delete`]),
   'contacts:delete_own', // delete contacts you own (contacts:delete covers anyone's)
   'contacts:export', // download contacts as a file
+  'tags:manage', // rename, recolor and delete tags
   'reports:read',
   'users:read', // see the team list
   'users:manage', // assign roles, manage accounts
@@ -39,6 +40,7 @@ export const ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
   MANAGER: [
     ...all(CRM_ENTITIES, ['read', 'write', 'delete']),
     'contacts:export',
+    'tags:manage',
     'reports:read',
     'users:read',
   ],

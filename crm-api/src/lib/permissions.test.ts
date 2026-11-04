@@ -34,6 +34,10 @@ describe('role permission matrix', () => {
     expect(ROLE_PERMISSIONS.MANAGER).toContain('contacts:export')
     expect(ROLE_PERMISSIONS.SALES).not.toContain('contacts:export')
     expect(ROLE_PERMISSIONS.SUPPORT).not.toContain('contacts:export')
+    // Renaming or deleting a tag changes every record that uses it: managers and admins only.
+    expect(ROLE_PERMISSIONS.MANAGER).toContain('tags:manage')
+    expect(ROLE_PERMISSIONS.SALES).not.toContain('tags:manage')
+    expect(ROLE_PERMISSIONS.SUPPORT).not.toContain('tags:manage')
     expect(ROLE_PERMISSIONS.SUPPORT).not.toContain('deals:write')
     expect(ROLE_PERMISSIONS.SUPPORT).not.toContain('leads:read')
   })

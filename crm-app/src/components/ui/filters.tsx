@@ -17,11 +17,13 @@ type FiltersProps = {
   filters: FilterDefinition[]
   values: Record<string, string | undefined>
   onChange: (values: Record<string, string | undefined>) => void
+  /** Something outside these selects is also filtering, so "Clear" should show. */
+  extraActive?: boolean
 }
 
 /** A row of select filters with a "Clear" button when any filter is active. */
-export function Filters({ filters, values, onChange }: FiltersProps) {
-  const active = filters.some((f) => values[f.key])
+export function Filters({ filters, values, onChange, extraActive = false }: FiltersProps) {
+  const active = extraActive || filters.some((f) => values[f.key])
 
   return (
     <div className="flex flex-wrap items-center gap-2">

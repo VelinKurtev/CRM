@@ -2,7 +2,7 @@ import { AxiosError, type AxiosResponse } from 'axios'
 import { vi } from 'vitest'
 
 import { api, getErrorMessage } from '@/api/client'
-import { exportContacts } from './contacts'
+import { bulkTagContacts, exportContacts, listContacts } from './contacts'
 
 const failure = (body: BlobPart) =>
   new AxiosError('bad', '400', undefined, undefined, {
@@ -18,6 +18,7 @@ describe('exportContacts', () => {
     const blob = await exportContacts({ q: 'bob', delimiter: 'semicolon' })
     expect(get).toHaveBeenCalledWith('/contacts/export', {
       params: { q: 'bob', delimiter: 'semicolon' },
+      paramsSerializer: { indexes: null },
       responseType: 'blob',
     })
     expect(await blob.text()).toBe('csv')
@@ -34,5 +35,29 @@ describe('exportContacts', () => {
     vi.spyOn(api, 'get').mockRejectedValue(failure('<html>oops</html>'))
     const error = await exportContacts({ delimiter: 'comma' }).catch((e: unknown) => e)
     expect(getErrorMessage(error, 'Could not export')).toBe('Could not export')
+  })
+})
+
+describe('tag filters', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('sends each tag as its own repeated parameter', async () => {
+    const get = vi.spyOn(api, 'get').mockResolvedValue({ data: { contacts: [] } })
+    await listContacts({ tag: ['vip', 'hot lead'], tagMode: 'all', q: 'bob' })
+    const config = get.mock.calls[0][1]!
+    expect(api.getUri({ url: '/contacts', ...config })).toMatch(
+      /\/contacts\?tag=vip&tag=hot\+lead&tagMode=all&q=bob$/,
+    )
+  })
+})
+
+describe('bulkTagContacts', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('posts the selection and the tags to add and remove', async () => {
+    const post = vi.spyOn(api, 'post').mockResolvedValue({ data: { updated: 2, skipped: 0 } })
+    const body = { contactIds: ['a', 'b'], add: ['vip'], remove: ['cold'] }
+    expect(await bulkTagContacts(body)).toEqual({ updated: 2, skipped: 0 })
+    expect(post).toHaveBeenCalledWith('/contacts/bulk-tags', body)
   })
 })

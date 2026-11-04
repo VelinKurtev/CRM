@@ -22,7 +22,7 @@ let globexId = ''
 
 type Row = { firstName: string; lastName: string; tags: string[]; owner: { id: string } | null }
 
-const list = (who: keyof typeof tokens, query: Record<string, string | number> = {}) =>
+const list = (who: keyof typeof tokens, query: Record<string, string | string[] | number> = {}) =>
   request(app)
     .get('/api/contacts')
     .query({ tag: T, ...query })
@@ -174,6 +174,24 @@ describe('GET /api/contacts', () => {
     expect(await find('other', { owner: 'me' })).toEqual(['Bob'])
     expect(await find('sales', { tag: V, q: 'carol' })).toEqual(['Carol'])
     expect(await find('sales', { tag: V, company: globexId })).toEqual([])
+  })
+
+  it('filters by several tags: any of them by default, or all of them', async () => {
+    const find = async (query: Record<string, string | string[]>) =>
+      names((await list('sales', query)).body.contacts)
+    const ghost = `ghost-${stamp}`
+    expect(await find({ tag: [V, ghost] })).toEqual(['Alice', 'Carol']) // either tag
+    expect(await find({ tag: [V, ghost], tagMode: 'any' })).toEqual(['Alice', 'Carol'])
+    expect(await find({ tag: [V, ghost], tagMode: 'all' })).toEqual([]) // nobody has both
+    expect(await find({ tag: [T, V], tagMode: 'all' })).toEqual(['Alice', 'Carol'])
+    expect(await find({ tag: [V.toUpperCase(), T.toUpperCase()], tagMode: 'all' })).toEqual([
+      'Alice',
+      'Carol',
+    ])
+    // Tags combine with the search and the other filters instead of replacing them.
+    expect(await find({ tag: [V, ghost], q: 'carol' })).toEqual(['Carol'])
+    expect(await find({ tag: [V, ghost], company: initechId })).toEqual(['Alice']) // Carol has no company
+    expect((await list('sales', { tagMode: 'some' })).status).toBe(400)
   })
 
   it('paginates without repeating or skipping anyone', async () => {

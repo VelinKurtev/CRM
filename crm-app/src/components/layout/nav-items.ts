@@ -1,4 +1,4 @@
-import { LayoutDashboard, ShieldCheck, UserRound, Users, type LucideIcon } from 'lucide-react'
+import { LayoutDashboard, ShieldCheck, Tag, UserRound, Users, type LucideIcon } from 'lucide-react'
 
 export type NavItem = {
   label: string
@@ -12,6 +12,7 @@ export type NavItem = {
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Contacts', to: '/contacts', icon: Users, permission: 'contacts:read' },
+  { label: 'Tags', to: '/tags', icon: Tag, permission: 'tags:manage' },
   { label: 'My profile', to: '/profile', icon: UserRound },
   { label: 'Users & roles', to: '/admin/users', icon: ShieldCheck, permission: 'users:manage' },
 ]

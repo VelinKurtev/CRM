@@ -357,7 +357,20 @@ export const openapi = {
         parameters: [
           { name: 'q', in: 'query', schema: { type: 'string' } },
           { name: 'company', in: 'query', schema: { type: 'string' }, description: 'Company id' },
-          { name: 'tag', in: 'query', schema: { type: 'string' }, description: 'Tag name' },
+          {
+            name: 'tag',
+            in: 'query',
+            schema: { type: 'array', items: { type: 'string' }, maxItems: 20 },
+            style: 'form',
+            explode: true,
+            description: 'Tag name; repeat (`tag=a&tag=b`) to filter by several',
+          },
+          {
+            name: 'tagMode',
+            in: 'query',
+            schema: { type: 'string', enum: ['any', 'all'], default: 'any' },
+            description: 'With several tags: contacts with `any` of them, or with `all` of them',
+          },
           { name: 'owner', in: 'query', schema: { type: 'string', enum: ['me'] } },
           {
             name: 'sort',
@@ -428,12 +441,25 @@ export const openapi = {
         tags: ['Records'],
         summary: 'Export contacts as CSV',
         description:
-          'Requires `contacts:export` (Manager, Admin). Downloads every contact matching the same `q`, `company`, `tag` and `owner` filters as the list (not just one page) as a UTF-8 CSV with a BOM, using the column names the import understands plus `owner` and `created`. Notes are not included. At most 10,000 contacts per download. Spreadsheet formulas in cells are neutralised. Recorded in the audit log.',
+          'Requires `contacts:export` (Manager, Admin). Downloads every contact matching the same `q`, `company`, `tag`, `tagMode` and `owner` filters as the list (not just one page) as a UTF-8 CSV with a BOM, using the column names the import understands plus `owner` and `created`. Notes are not included. At most 10,000 contacts per download. Spreadsheet formulas in cells are neutralised. Recorded in the audit log.',
         security: [{ bearerAuth: [] }],
         parameters: [
           { name: 'q', in: 'query', schema: { type: 'string' } },
           { name: 'company', in: 'query', schema: { type: 'string' }, description: 'Company id' },
-          { name: 'tag', in: 'query', schema: { type: 'string' }, description: 'Tag name' },
+          {
+            name: 'tag',
+            in: 'query',
+            schema: { type: 'array', items: { type: 'string' }, maxItems: 20 },
+            style: 'form',
+            explode: true,
+            description: 'Tag name; repeat (`tag=a&tag=b`) to filter by several',
+          },
+          {
+            name: 'tagMode',
+            in: 'query',
+            schema: { type: 'string', enum: ['any', 'all'], default: 'any' },
+            description: 'With several tags: contacts with `any` of them, or with `all` of them',
+          },
           { name: 'owner', in: 'query', schema: { type: 'string', enum: ['me'] } },
           {
             name: 'delimiter',
@@ -581,6 +607,107 @@ export const openapi = {
         ],
         responses: {
           '200': { description: '`{ tags: [name] }`' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/tags/details': {
+      get: {
+        tags: ['Records'],
+        summary: 'List tags with colour and usage',
+        description:
+          'Requires `contacts:read`. Every tag matching `q` (up to `limit`, default 100, max 500) with its `color` (`#rrggbb` or null), `contactCount` and `usageCount` (contacts, companies, leads and deals together).',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'q', in: 'query', schema: { type: 'string' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', default: 100, maximum: 500 } },
+        ],
+        responses: {
+          '200': { description: '`{ tags: [{ id, name, color, contactCount, usageCount }] }`' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/tags/{id}': {
+      patch: {
+        tags: ['Records'],
+        summary: 'Rename or recolour a tag',
+        description:
+          'Requires `tags:manage` (Manager, Admin). Send `name` and/or `color` (`#rrggbb`, or `null` to clear). A rename applies to every record that uses the tag. Names are unique whatever their letter case.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', maxLength: 50 },
+                  color: { type: 'string', nullable: true, example: '#3b82f6' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: '`{ tag: { id, name, color } }`' },
+          '400': { description: 'Validation failed' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Tag not found' },
+          '409': { description: 'Another tag already has this name' },
+        },
+      },
+      delete: {
+        tags: ['Records'],
+        summary: 'Delete a tag',
+        description:
+          'Requires `tags:manage` (Manager, Admin). Removes the tag from every contact, company, lead and deal that has it; the records themselves are kept. Recorded in the audit log.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '204': { description: 'Deleted' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Tag not found' },
+        },
+      },
+    },
+    '/contacts/bulk-tags': {
+      post: {
+        tags: ['Records'],
+        summary: 'Add or remove tags on many contacts',
+        description:
+          'Requires `contacts:write`. Adds the `add` tags (created if new, matched whatever their letter case) and removes the `remove` tags on up to 500 contacts at once. All or nothing: if a contact would end up with more than 20 tags, nothing changes. Ids that match no contact are skipped and counted. Recorded in the audit log.',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['contactIds'],
+                properties: {
+                  contactIds: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    minItems: 1,
+                    maxItems: 500,
+                  },
+                  add: { type: 'array', items: { type: 'string' }, maxItems: 20 },
+                  remove: { type: 'array', items: { type: 'string' }, maxItems: 20 },
+                },
+              },
+              example: { contactIds: ['c1', 'c2'], add: ['vip'], remove: ['cold'] },
+            },
+          },
+        },
+        responses: {
+          '200': { description: '`{ updated, skipped }`' },
+          '400': { description: 'Validation failed, or a contact would exceed 20 tags' },
           '401': { $ref: '#/components/responses/Unauthorized' },
           '403': { $ref: '#/components/responses/Forbidden' },
         },

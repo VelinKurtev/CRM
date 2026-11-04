@@ -106,8 +106,11 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
 - [x] **US-020 – Export contacts**
   As a Manager, I want to export contacts, so that I can use the data elsewhere.
 
-- [ ] **US-021 – Tags**
+- [x] **US-021 – Tags**
   As a user, I want to tag contacts, so that I can group and filter them.
+  - [x] Filter by one or several tags (any or all); click a tag to filter.
+  - [x] Add or remove tags on many contacts at once.
+  - [x] Managers and admins can rename, recolour and delete tags.
 
 - [ ] **US-022 – Create and edit company**
   As a Sales user, I want to manage companies (name, industry, employees, revenue, website), so that organizations are tracked.

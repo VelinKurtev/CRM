@@ -72,7 +72,10 @@ function renderList(url = '/contacts', permissions = user.permissions) {
 beforeEach(() => {
   vi.resetAllMocks()
   vi.mocked(contacts.listContacts).mockResolvedValue(page([alice, bob]))
-  vi.mocked(contacts.listTags).mockResolvedValue(['vip', 'hot'])
+  vi.mocked(contacts.listTagDetails).mockResolvedValue([
+    { id: 't1', name: 'vip', color: '#ff0000', contactCount: 2, usageCount: 2 },
+    { id: 't2', name: 'hot', color: null, contactCount: 1, usageCount: 1 },
+  ])
   vi.mocked(contacts.listCompanies).mockResolvedValue([{ id: 'co1', name: 'Initech' }])
 })
 
@@ -119,7 +122,7 @@ describe('Contacts list', () => {
     await screen.findByText('Alice Adams')
     expect(lastCall()).toEqual({
       q: 'bob',
-      tag: 'vip',
+      tag: ['vip'],
       owner: 'me',
       company: 'co1',
       sort: 'company',
@@ -134,17 +137,70 @@ describe('Contacts list', () => {
   it('filters from the dropdowns', async () => {
     renderList()
     await screen.findByText('Alice Adams')
-    await userEvent.click(await screen.findByRole('combobox', { name: 'Tag' }))
-    await userEvent.click(await screen.findByRole('option', { name: 'vip' }))
-    await waitFor(() => expect(lastCall()).toMatchObject({ tag: 'vip', page: 1 }))
+    await userEvent.click(screen.getByRole('button', { name: 'Tags' }))
+    await userEvent.click(await screen.findByRole('checkbox', { name: 'vip' }))
+    await waitFor(() => expect(lastCall()).toMatchObject({ tag: ['vip'], page: 1 }))
+    await userEvent.keyboard('{Escape}')
 
     await userEvent.click(screen.getByRole('combobox', { name: 'Owner' }))
     await userEvent.click(await screen.findByRole('option', { name: 'My contacts' }))
-    await waitFor(() => expect(lastCall()).toMatchObject({ tag: 'vip', owner: 'me' }))
+    await waitFor(() => expect(lastCall()).toMatchObject({ tag: ['vip'], owner: 'me' }))
 
     await userEvent.click(screen.getByRole('button', { name: 'Clear' }))
-    await waitFor(() => expect(lastCall().tag).toBeUndefined())
+    await waitFor(() => expect(lastCall().tag).toEqual([]))
     expect(lastCall().owner).toBeUndefined()
+  })
+
+  it('filters by several tags, matching any or all of them', async () => {
+    const router = renderList()
+    await screen.findByText('Alice Adams')
+    await userEvent.click(screen.getByRole('button', { name: 'Tags' }))
+    // The match choice only makes sense with two or more tags.
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument()
+    await userEvent.click(await screen.findByRole('checkbox', { name: 'vip' }))
+    await userEvent.click(screen.getByRole('checkbox', { name: 'hot' }))
+    await waitFor(() =>
+      expect(lastCall()).toMatchObject({ tag: ['vip', 'hot'], tagMode: undefined }),
+    )
+
+    await userEvent.click(screen.getByRole('radio', { name: 'all of these tags' }))
+    await waitFor(() => expect(lastCall()).toMatchObject({ tag: ['vip', 'hot'], tagMode: 'all' }))
+    expect(router.state.location.search).toBe('?tag=vip&tag=hot&tagMode=all')
+    expect(screen.getByRole('button', { name: 'Tags' })).toHaveTextContent('2 tags')
+
+    await userEvent.click(screen.getByRole('checkbox', { name: 'hot' }))
+    await waitFor(() => expect(router.state.location.search).toBe('?tag=vip')) // mode resets
+
+    await userEvent.click(screen.getByRole('button', { name: 'Clear tags' }))
+    await waitFor(() => expect(lastCall().tag).toEqual([]))
+    expect(router.state.location.search).toBe('')
+  })
+
+  it('shows tags in their colour and filters by clicking one', async () => {
+    vi.mocked(contacts.listContacts).mockResolvedValue(page([{ ...alice, tags: ['hot', 'VIP'] }]))
+    const router = renderList()
+    const row = (await screen.findByText('Alice Adams')).closest('tr')!
+    // Colours come from the tag list, found whatever the letter case.
+    expect(within(row).getByRole('button', { name: 'VIP' })).toHaveStyle({
+      backgroundColor: '#ff0000',
+    })
+
+    await userEvent.click(within(row).getByRole('button', { name: 'hot' }))
+    await waitFor(() => expect(lastCall()).toMatchObject({ tag: ['hot'] }))
+    await userEvent.click(within(row).getByRole('button', { name: 'VIP' }))
+    await waitFor(() => expect(lastCall()).toMatchObject({ tag: ['hot', 'VIP'] }))
+    expect(router.state.location.search).toBe('?tag=hot&tag=VIP')
+
+    // Clicking a tag that is already in the filter doesn't add it twice.
+    await userEvent.click(within(row).getByRole('button', { name: 'hot' }))
+    expect(router.state.location.search).toBe('?tag=hot&tag=VIP')
+  })
+
+  it('still lists contacts if the tag list cannot be loaded', async () => {
+    vi.mocked(contacts.listTagDetails).mockRejectedValue(new Error('boom'))
+    renderList()
+    expect(await screen.findByText('Alice Adams')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Tags' })).toBeInTheDocument()
   })
 
   it('sorts by clicking a column, flipping direction on the second click', async () => {
@@ -254,7 +310,7 @@ describe('Exporting contacts', () => {
 
   it('downloads what the current search and filters match, as a file', async () => {
     vi.mocked(contacts.exportContacts).mockResolvedValue(new Blob(['csv']))
-    renderList('/contacts?q=bob&tag=vip&owner=me&page=2', manager)
+    renderList('/contacts?q=bob&tag=vip&tag=hot&tagMode=all&owner=me&page=2', manager)
     await screen.findByText('Alice Adams')
 
     await userEvent.click(screen.getByRole('button', { name: /Export/ }))
@@ -267,7 +323,8 @@ describe('Exporting contacts', () => {
     // The whole result, not the page you happen to be on: no page number is sent.
     expect(contacts.exportContacts).toHaveBeenCalledWith({
       q: 'bob',
-      tag: 'vip',
+      tag: ['vip', 'hot'],
+      tagMode: 'all',
       owner: 'me',
       company: undefined,
       delimiter: 'comma',
@@ -308,5 +365,96 @@ describe('Exporting contacts', () => {
     renderList('/contacts', manager)
     await screen.findByText('No contacts yet')
     expect(screen.getByRole('button', { name: /Export/ })).toBeDisabled()
+  })
+})
+
+describe('Tagging several contacts', () => {
+  const tick = (name: string) => userEvent.click(screen.getByRole('checkbox', { name }))
+
+  it('offers selection only to people who can edit contacts', async () => {
+    renderList('/contacts', ['contacts:read'])
+    await screen.findByText('Alice Adams')
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
+  })
+
+  it('adds a tag to the ticked contacts, then clears the selection and refreshes the list', async () => {
+    vi.mocked(contacts.bulkTagContacts).mockResolvedValue({ updated: 2, skipped: 0 })
+    renderList()
+    await screen.findByText('Alice Adams')
+    expect(screen.queryByRole('region', { name: 'Selected contacts' })).not.toBeInTheDocument()
+
+    await tick('Select all contacts on this page')
+    const bar = screen.getByRole('region', { name: 'Selected contacts' })
+    expect(bar).toHaveTextContent('2 selected')
+    await userEvent.click(within(bar).getByRole('button', { name: 'Add tags' }))
+
+    const dialog = await screen.findByRole('dialog', { name: 'Add tags to 2 contacts' })
+    const apply = within(dialog).getByRole('button', { name: 'Add tags' })
+    expect(apply).toBeDisabled() // nothing to add yet
+    await userEvent.type(within(dialog).getByRole('combobox'), 'newsletter{Enter}')
+    await userEvent.click(apply)
+
+    await waitFor(() =>
+      expect(contacts.bulkTagContacts).toHaveBeenCalledWith({
+        contactIds: ['c1', 'c2'],
+        add: ['newsletter'],
+      }),
+    )
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(screen.queryByRole('region', { name: 'Selected contacts' })).not.toBeInTheDocument()
+    expect(vi.mocked(contacts.listContacts).mock.calls.length).toBeGreaterThan(1) // refetched
+  })
+
+  it('removes a tag from just the contacts that were ticked', async () => {
+    vi.mocked(contacts.bulkTagContacts).mockResolvedValue({ updated: 1, skipped: 0 })
+    renderList()
+    await screen.findByText('Alice Adams')
+    await tick('Select Bob Baker')
+    expect(screen.getByRole('region', { name: 'Selected contacts' })).toHaveTextContent(
+      '1 selected',
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Remove tags' }))
+
+    const dialog = await screen.findByRole('dialog', { name: 'Remove tags from 1 contact' })
+    await userEvent.type(within(dialog).getByRole('combobox'), 'cold{Enter}')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Remove tags' }))
+    await waitFor(() =>
+      expect(contacts.bulkTagContacts).toHaveBeenCalledWith({
+        contactIds: ['c2'],
+        remove: ['cold'],
+      }),
+    )
+  })
+
+  it('shows the error and keeps the selection if tagging fails', async () => {
+    vi.mocked(contacts.bulkTagContacts).mockRejectedValue(new Error('boom'))
+    renderList()
+    await screen.findByText('Alice Adams')
+    await tick('Select Alice Adams')
+    await userEvent.click(screen.getByRole('button', { name: 'Add tags' }))
+    const dialog = await screen.findByRole('dialog')
+    await userEvent.type(within(dialog).getByRole('combobox'), 'x{Enter}')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Add tags' }))
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Could not update the tags')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+    expect(screen.getByRole('region', { name: 'Selected contacts' })).toHaveTextContent(
+      '1 selected',
+    )
+  })
+
+  it('drops the selection when the filters change, and can clear it', async () => {
+    renderList()
+    await screen.findByText('Alice Adams')
+    await tick('Select Alice Adams')
+    await userEvent.click(screen.getByRole('button', { name: 'Clear selection' }))
+    expect(screen.queryByRole('region', { name: 'Selected contacts' })).not.toBeInTheDocument()
+
+    await tick('Select Alice Adams')
+    await userEvent.click(screen.getByRole('combobox', { name: 'Owner' }))
+    await userEvent.click(await screen.findByRole('option', { name: 'My contacts' }))
+    await waitFor(() =>
+      expect(screen.queryByRole('region', { name: 'Selected contacts' })).not.toBeInTheDocument(),
+    )
   })
 })

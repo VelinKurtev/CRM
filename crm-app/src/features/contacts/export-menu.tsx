@@ -22,7 +22,7 @@ export function ExportMenu({ filters, total }: { filters: Filters; total: number
     },
   })
 
-  const filtered = Boolean(filters.q || filters.company || filters.tag || filters.owner)
+  const filtered = Boolean(filters.q || filters.company || filters.tag?.length || filters.owner)
   return (
     <Popover
       open={open}

@@ -48,6 +48,11 @@ Swagger UI at **http://localhost:4000/api/docs**; the raw spec is at `/api/opena
 | `POST /contacts/import` | `contacts:write` | Import CSV (`?dryRun=true` to preview) |
 | `GET /contacts/export` | `contacts:export` | Download CSV of what matches the filters |
 | `GET /companies`, `GET /tags` | `companies:read`, `contacts:read` | Suggestions and filter options |
+| `GET /tags/details` | `contacts:read` | Tags with colour and usage counts |
+| `PATCH /tags/{id}`, `DELETE /tags/{id}` | `tags:manage` | Rename or recolour; delete (removes it from every record) |
+| `POST /contacts/bulk-tags` | `contacts:write` | Add and/or remove tags on up to 500 contacts, all or nothing |
+
+The contact list and export take `tag` repeated for several tags (`?tag=a&tag=b`) and `tagMode=any|all`.
 
 Quick-create (used by the dashboard's quick actions): `POST /leads`, `POST /deals`, `POST /tasks`, each taking only
 the essentials. Deals start in the first stage of the default pipeline.

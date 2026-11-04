@@ -5,6 +5,7 @@ import { ContactsPage } from '@/features/contacts/contacts-page'
 import { ImportContactsPage } from '@/features/contacts/import-contacts-page'
 import { EditContactPage } from '@/features/contacts/edit-contact-page'
 import { NewContactPage } from '@/features/contacts/new-contact-page'
+import { TagsPage } from '@/features/tags/tags-page'
 import { UsersPage } from '@/features/admin/users-page'
 import { ForgotPasswordPage } from '@/features/auth/forgot-password-page'
 import { LoginPage } from '@/features/auth/login-page'
@@ -62,6 +63,10 @@ export const routes = [
                 ],
               },
             ],
+          },
+          {
+            element: <RequirePermission permission="tags:manage" />,
+            children: [{ path: '/tags', element: <TagsPage />, handle: { crumb: 'Tags' } }],
           },
           {
             element: <RequirePermission permission="users:manage" />,

@@ -69,7 +69,7 @@ beforeEach(() => {
     page: 1,
     pageSize: 20,
   })
-  vi.mocked(contacts.listTags).mockResolvedValue([])
+  vi.mocked(contacts.listTagDetails).mockResolvedValue([])
   vi.mocked(contacts.listCompanies).mockResolvedValue([])
 })
 
