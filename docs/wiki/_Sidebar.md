@@ -4,6 +4,7 @@
 - [[Getting Started]]
 - [[Contacts]]
 - [[Companies]]
+- [[Notes]]
 - [[Dashboard]]
 - [[Roles and Permissions]]
 

@@ -1,4 +1,5 @@
 import { api } from '@/api/client'
+import type { Note } from './notes'
 
 export type Company = {
   id: string
@@ -63,13 +64,6 @@ export type CompanyDeal = {
   stage: string
 }
 
-export type CompanyNote = {
-  id: string
-  body: string
-  createdAt: string
-  author: { id: string; firstName: string; lastName: string }
-}
-
 /** The newest or first few of something, with how many there are in all. */
 type Section<T> = { total: number; items: T[] }
 
@@ -79,7 +73,7 @@ export type CompanyOverview = {
   contacts: Section<CompanyContact> | null
   deals:
     (Section<CompanyDeal> & { open: { currency: string; count: number; value: number }[] }) | null
-  notes: Section<CompanyNote> | null
+  notes: Section<Note> | null
 }
 
 export const getCompanyOverview = (id: string) =>

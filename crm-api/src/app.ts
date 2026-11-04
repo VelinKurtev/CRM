@@ -16,6 +16,7 @@ import { contactsExportRouter } from './routes/contacts-export.js'
 import { contactsImportRouter } from './routes/contacts-import.js'
 import { contactsRouter } from './routes/contacts.js'
 import { tagsRouter } from './routes/tags.js'
+import { notesRouter } from './routes/notes.js'
 import { quickCreateRouter } from './routes/quick-create.js'
 import { dashboardRouter } from './routes/dashboard.js'
 import { usersRouter } from './routes/users.js'
@@ -62,6 +63,7 @@ app.use('/api', contactsImportRouter)
 app.use('/api', contactsRouter)
 app.use('/api', companiesRouter)
 app.use('/api', tagsRouter)
+app.use('/api', notesRouter)
 app.use('/api', quickCreateRouter)
 
 app.get('/api/openapi.json', (_req, res) => {

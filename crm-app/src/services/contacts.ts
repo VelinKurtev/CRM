@@ -1,6 +1,7 @@
 import axios from 'axios'
 
 import { api } from '@/api/client'
+import type { Note } from './notes'
 
 export type NewContact = {
   firstName: string
@@ -258,7 +259,7 @@ export type ContactOverview = {
     sentAt: string | null
     createdAt: string
   }> | null
-  notes: Section<{ id: string; body: string; createdAt: string; author: Person }> | null
+  notes: Section<Note> | null
 }
 
 export const getContactOverview = (id: string) =>

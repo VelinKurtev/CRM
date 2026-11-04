@@ -3,6 +3,7 @@ import axios from 'axios'
 import { ExternalLink, Pencil, UserX } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
+import { NotesSection } from '@/features/notes/notes-section'
 import { formatDate } from '@/utils/format-date'
 import { getErrorMessage } from '@/api/client'
 import { DetailSection, EmptyNote, Fact, None } from '@/components/detail-section'
@@ -246,22 +247,12 @@ export function ContactDetailPage() {
       )}
 
       {notes && (
-        <DetailSection title="Notes" total={notes.total} shown={notes.items.length}>
-          {notes.items.length === 0 ? (
-            <EmptyNote>No notes on this contact yet.</EmptyNote>
-          ) : (
-            <ul className="space-y-3">
-              {notes.items.map((n) => (
-                <li key={n.id} className="rounded-md border p-3">
-                  <p className="text-sm whitespace-pre-wrap">{n.body}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {fullName(n.author)} · {formatDate(n.createdAt)}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </DetailSection>
+        <NotesSection
+          target={{ contactId: c.id }}
+          notes={notes}
+          queryKey={['contact', id, 'overview']}
+          emptyText="No notes on this contact yet."
+        />
       )}
     </div>
   )

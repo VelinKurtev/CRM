@@ -329,6 +329,7 @@ const overview: companies.CompanyOverview = {
         id: 'n1',
         body: 'Prefers email.\nBudget: 50k',
         createdAt: '2026-02-01T10:00:00Z',
+        updatedAt: '2026-02-01T10:00:00Z',
         author: { id: '1', firstName: 'Ann', lastName: 'Lee' },
       },
     ],

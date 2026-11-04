@@ -730,6 +730,82 @@ export const openapi = {
         },
       },
     },
+    '/notes': {
+      post: {
+        tags: ['Records'],
+        summary: 'Add a note',
+        description:
+          'Requires `notes:write` and read access to the record. Give exactly one of `contactId`, `companyId` or `dealId`. `body` is up to 5000 characters. The caller is the author. Notes appear in the contact and company overviews.',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['body'],
+                properties: {
+                  body: { type: 'string', maxLength: 5000 },
+                  contactId: { type: 'string' },
+                  companyId: { type: 'string' },
+                  dealId: { type: 'string' },
+                },
+              },
+              example: { body: 'Prefers email. Budget around 50k.', contactId: 'abc123' },
+            },
+          },
+        },
+        responses: {
+          '201': { description: '`{ note: { id, body, createdAt, updatedAt, author } }`' },
+          '400': { description: 'Validation failed' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'The contact, company or deal was not found' },
+        },
+      },
+    },
+    '/notes/{id}': {
+      patch: {
+        tags: ['Records'],
+        summary: 'Edit a note',
+        description: 'Requires `notes:write`. Only the author can edit a note.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['body'],
+                properties: { body: { type: 'string', maxLength: 5000 } },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: '`{ note }`' },
+          '400': { description: 'Validation failed' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Note not found' },
+        },
+      },
+      delete: {
+        tags: ['Records'],
+        summary: 'Delete a note',
+        description:
+          'The author can delete their own note; anyone with `notes:delete` can delete any note.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '204': { description: 'Deleted' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Note not found' },
+        },
+      },
+    },
     '/tags/details': {
       get: {
         tags: ['Records'],

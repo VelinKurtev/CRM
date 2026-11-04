@@ -296,7 +296,7 @@ contactsRouter.get(
               where,
               orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
               take: SECTION_LIMIT,
-              select: { id: true, body: true, createdAt: true, author: person },
+              select: { id: true, body: true, createdAt: true, updatedAt: true, author: person },
             }),
           ])
         : null,

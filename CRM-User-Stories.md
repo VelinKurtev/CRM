@@ -122,7 +122,7 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
 - [x] **US-024 – Contact detail page**
   As a Sales user, I want a contact page showing activities, tasks and emails, so that I see the full relationship history.
 
-- [ ] **US-025 – Notes on customers**
+- [x] **US-025 – Notes on customers**
   As a user, I want to add notes to contacts, companies and deals, so that important information such as preferences and budget is captured.
 
 ---

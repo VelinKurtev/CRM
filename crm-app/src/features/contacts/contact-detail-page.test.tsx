@@ -92,7 +92,15 @@ const overview: contacts.ContactOverview = {
   },
   notes: {
     total: 1,
-    items: [{ id: 'n1', body: 'Prefers email', createdAt: '2026-02-01T10:00:00Z', author: ann }],
+    items: [
+      {
+        id: 'n1',
+        body: 'Prefers email',
+        createdAt: '2026-02-01T10:00:00Z',
+        updatedAt: '2026-02-01T10:00:00Z',
+        author: ann,
+      },
+    ],
   },
 }
 

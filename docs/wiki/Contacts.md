@@ -46,7 +46,7 @@ its page), then the relationship history.
 - **Activities:** calls, meetings and so on, newest first, with who logged them.
 - **Tasks:** unfinished first, soonest due first. Overdue ones are flagged; finished ones are struck through.
 - **Emails:** subject, from → to and date; unsent ones are marked *Draft*.
-- **Notes:** newest first, with author and date.
+- **Notes:** newest first, with author and date. See [[Notes]].
 
 Each list shows the first 50 and says how many there are in all. A section only appears if your role may read that
 kind of record. **Edit contact** appears for people who can write. Logging activities, tasks and emails, and adding

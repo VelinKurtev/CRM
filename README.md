@@ -97,6 +97,11 @@ recolour or delete tags.
 Click a contact's name for their page: details, tags and links, then their activities, tasks, emails and notes
 in one place.
 
+## Notes
+
+Contact and company pages have a **Notes** section: write a note (preferences, budget, anything worth keeping),
+and edit or delete it later. See the wiki's Notes page for who can do what.
+
 ## Companies
 
 **Companies** in the sidebar lists organizations (search by name or industry). Sales users and above can add and

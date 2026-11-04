@@ -10,7 +10,7 @@ Click a company's name to open its page: details at the top, then everything lin
 - **Contacts** by name, with job title, email and phone (names open the contact for people who can edit).
 - **Deals** newest first, with stage, status, value and expected close date, and the total of the open ones
   (per currency, since deals can differ).
-- **Notes** newest first, with author and date. Notes on companies can't be added yet; that arrives with US-025.
+- **Notes** newest first, with author and date. See [[Notes]].
 
 Each list shows the first 50 and says how many there are in all. A section only appears if your role may read that
 kind of record. **Edit company** appears for people who can write.
