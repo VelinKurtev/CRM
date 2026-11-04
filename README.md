@@ -88,8 +88,9 @@ recorded in the audit log.
 
 ## Wiki
 
-The project wiki is written in `docs/wiki/` (reviewed with the code) and published with `scripts/publish-wiki.sh`.
-The first time, create the first page in GitHub's Wiki tab so the wiki repository exists.
+The project wiki is written in `docs/wiki/` (reviewed with the code). A workflow (`.github/workflows/wiki.yml`)
+publishes it to the GitHub wiki whenever those files change on `main`; `scripts/publish-wiki.sh` does the same by hand.
+Edit the pages in the repo, not on GitHub, because each publish replaces the wiki's contents.
 
 ## Production notes
 

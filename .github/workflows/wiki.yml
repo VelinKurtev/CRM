@@ -1,0 +1,32 @@
+name: Publish wiki
+
+# Keeps the GitHub wiki in step with docs/wiki/ on main. Edit the pages in the repo, not on GitHub:
+# each run replaces the wiki's contents with docs/wiki/.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/wiki/**'
+      - 'scripts/publish-wiki.sh'
+  workflow_dispatch: # also runnable by hand from the Actions tab
+
+permissions:
+  contents: write # lets the built-in token push to the wiki
+
+concurrency:
+  group: publish-wiki
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Publish docs/wiki to the wiki
+        env:
+          WIKI_URL: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.wiki.git
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: scripts/publish-wiki.sh
