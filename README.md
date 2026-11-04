@@ -86,6 +86,11 @@ current search and filters (not just the visible page) as a CSV, up to 10,000 at
 format, so an export can be edited and imported elsewhere. Notes are not included, and every export is
 recorded in the audit log.
 
+## Wiki
+
+The project wiki is written in `docs/wiki/` (reviewed with the code) and published with `scripts/publish-wiki.sh`.
+The first time, create the first page in GitHub's Wiki tab so the wiki repository exists.
+
 ## Production notes
 
 - Set a strong `JWT_SECRET`, `NODE_ENV=production`, and `CORS_ORIGIN` / `APP_URL` to the real frontend URL.
