@@ -116,11 +116,11 @@ describe('Companies list', () => {
     expect(router.state.location.search).toBe('?q=acme')
   })
 
-  it('lets writers open the edit page, but read-only roles only look', async () => {
+  it('links each name to the company page, and offers New company to writers only', async () => {
     renderAt('/companies')
     expect(await screen.findByRole('link', { name: 'Acme' })).toHaveAttribute(
       'href',
-      '/companies/co1/edit',
+      '/companies/co1',
     )
     expect(screen.getByRole('link', { name: /New company/ })).toHaveAttribute(
       'href',
@@ -128,10 +128,9 @@ describe('Companies list', () => {
     )
   })
 
-  it('hides create and edit from read-only roles', async () => {
+  it('lets read-only roles look at companies but not add them', async () => {
     renderAt('/companies', ['companies:read'])
-    expect(await screen.findByText('Acme')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Acme' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Acme' })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /New company/ })).not.toBeInTheDocument()
   })
 
@@ -254,7 +253,7 @@ describe('Edit company', () => {
         website: 'https://www.acme.example.com/',
       }),
     )
-    await waitFor(() => expect(router.state.location.pathname).toBe('/companies'))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/companies/co1'))
   })
 
   it('says when the company does not exist', async () => {
@@ -280,5 +279,158 @@ describe('Edit company', () => {
     renderAt('/companies/co1/edit', ['companies:read'])
     expect(screen.getByText('Access denied')).toBeInTheDocument()
     expect(companies.getCompany).not.toHaveBeenCalled()
+  })
+})
+
+const overview: companies.CompanyOverview = {
+  company: acme,
+  contacts: {
+    total: 2,
+    items: [
+      {
+        id: 'c1',
+        firstName: 'Alice',
+        lastName: 'Adams',
+        jobTitle: 'CTO',
+        email: 'a@x.test',
+        phone: null,
+      },
+      { id: 'c2', firstName: 'Bob', lastName: 'Baker', jobTitle: null, email: null, phone: '222' },
+    ],
+  },
+  deals: {
+    total: 2,
+    open: [{ currency: 'USD', count: 1, value: 4000 }],
+    items: [
+      {
+        id: 'd1',
+        title: 'Platform licence',
+        amount: 4000,
+        currency: 'USD',
+        status: 'OPEN',
+        expectedClose: '2026-12-15T00:00:00Z',
+        stage: 'Proposal',
+      },
+      {
+        id: 'd2',
+        title: 'Pilot',
+        amount: 900,
+        currency: 'EUR',
+        status: 'WON',
+        expectedClose: null,
+        stage: 'Won',
+      },
+    ],
+  },
+  notes: {
+    total: 1,
+    items: [
+      {
+        id: 'n1',
+        body: 'Prefers email.\nBudget: 50k',
+        createdAt: '2026-02-01T10:00:00Z',
+        author: { id: '1', firstName: 'Ann', lastName: 'Lee' },
+      },
+    ],
+  },
+}
+
+describe('Company page', () => {
+  beforeEach(() => {
+    vi.mocked(companies.getCompanyOverview).mockResolvedValue(overview)
+  })
+
+  it('shows the company’s facts, contacts, deals and notes in one page', async () => {
+    renderAt('/companies/co1')
+    expect(await screen.findByRole('heading', { name: 'Acme' })).toBeInTheDocument()
+    expect(companies.getCompanyOverview).toHaveBeenCalledWith('co1')
+    expect(screen.getByText('Manufacturing')).toBeInTheDocument()
+    expect(screen.getByText('12,500')).toBeInTheDocument()
+    expect(screen.getByText('$1,250,001')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /www\.acme\.example\.com/ })).toHaveAttribute(
+      'href',
+      'https://www.acme.example.com/',
+    )
+
+    const contactRow = screen.getByText('Alice Adams').closest('tr')!
+    expect(within(contactRow).getByText('CTO')).toBeInTheDocument()
+    expect(within(contactRow).getByRole('link', { name: 'a@x.test' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Contacts/ })).toHaveTextContent('(2)')
+
+    const dealRow = screen.getByText('Platform licence').closest('tr')!
+    expect(within(dealRow).getByText('Proposal')).toBeInTheDocument()
+    expect(within(dealRow).getByText('Open')).toBeInTheDocument()
+    expect(within(dealRow).getByText('$4,000')).toBeInTheDocument()
+    expect(within(dealRow).getByText('Dec 15, 2026')).toBeInTheDocument()
+    expect(screen.getByText('Pilot').closest('tr')).toHaveTextContent('€900')
+    expect(screen.getByText(/Open: \$4,000 in 1 deal/)).toBeInTheDocument()
+
+    expect(screen.getByText(/Budget: 50k/)).toBeInTheDocument()
+    expect(screen.getByText(/Ann Lee · Feb 1, 2026/)).toBeInTheDocument()
+  })
+
+  it('offers editing, and links contacts to their edit page, to people who can write', async () => {
+    renderAt('/companies/co1', [...sales.permissions, 'contacts:write'])
+    expect(await screen.findByRole('link', { name: /Edit company/ })).toHaveAttribute(
+      'href',
+      '/companies/co1/edit',
+    )
+    expect(screen.getByRole('link', { name: 'Alice Adams' })).toHaveAttribute(
+      'href',
+      '/contacts/c1/edit',
+    )
+  })
+
+  it('is read-only for roles that cannot write', async () => {
+    renderAt('/companies/co1', ['companies:read'])
+    await screen.findByRole('heading', { name: 'Acme' })
+    expect(screen.queryByRole('link', { name: /Edit company/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Alice Adams' })).not.toBeInTheDocument()
+    expect(screen.getByText('Alice Adams')).toBeInTheDocument()
+  })
+
+  it('says so when sections are empty', async () => {
+    vi.mocked(companies.getCompanyOverview).mockResolvedValue({
+      company: bare,
+      contacts: { total: 0, items: [] },
+      deals: { total: 0, items: [], open: [] },
+      notes: { total: 0, items: [] },
+    })
+    renderAt('/companies/co2')
+    expect(await screen.findByText('No contacts at this company yet.')).toBeInTheDocument()
+    expect(screen.getByText('No deals with this company yet.')).toBeInTheDocument()
+    expect(screen.getByText('No notes on this company yet.')).toBeInTheDocument()
+    expect(screen.queryByText(/^Open:/)).not.toBeInTheDocument()
+  })
+
+  it('leaves out sections the role may not read, and says when a list is cut short', async () => {
+    vi.mocked(companies.getCompanyOverview).mockResolvedValue({
+      ...overview,
+      deals: null,
+      notes: null,
+      contacts: { ...overview.contacts!, total: 120 },
+    })
+    renderAt('/companies/co1')
+    await screen.findByText('Alice Adams')
+    expect(screen.queryByRole('heading', { name: /Deals/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Notes/ })).not.toBeInTheDocument()
+    expect(screen.getByText('Showing 2 of 120.')).toBeInTheDocument()
+  })
+
+  it('handles a missing company and load errors', async () => {
+    vi.mocked(companies.getCompanyOverview).mockRejectedValue(apiError(404, 'Company not found'))
+    renderAt('/companies/gone')
+    expect(await screen.findByText('Company not found')).toBeInTheDocument()
+  })
+
+  it('shows other failures', async () => {
+    vi.mocked(companies.getCompanyOverview).mockRejectedValue(new Error('boom'))
+    renderAt('/companies/co1')
+    expect(await screen.findByText('Could not load the company')).toBeInTheDocument()
+  })
+
+  it('is closed to roles without companies:read', () => {
+    renderAt('/companies/co1', [])
+    expect(screen.getByText('Access denied')).toBeInTheDocument()
   })
 })

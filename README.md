@@ -96,7 +96,7 @@ recolour or delete tags.
 
 **Companies** in the sidebar lists organizations (search by name or industry). Sales users and above can add and
 edit them: name (required), industry, employees, annual revenue in USD and website. Names are unique whatever
-their letter case. Contacts still link to a company by name on their form.
+their letter case. Click a name for the company page: its contacts, deals and notes in one place. Contacts still link to a company by name on their form.
 
 ## Wiki
 

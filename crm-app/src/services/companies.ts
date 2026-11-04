@@ -43,3 +43,44 @@ export const createCompany = (body: NewCompany) =>
 
 export const updateCompany = (id: string, body: CompanyUpdate) =>
   api.patch<{ company: Company }>(`/companies/${id}`, body).then((r) => r.data.company)
+
+export type CompanyContact = {
+  id: string
+  firstName: string
+  lastName: string
+  jobTitle: string | null
+  email: string | null
+  phone: string | null
+}
+
+export type CompanyDeal = {
+  id: string
+  title: string
+  amount: number
+  currency: string
+  status: 'OPEN' | 'WON' | 'LOST'
+  expectedClose: string | null
+  stage: string
+}
+
+export type CompanyNote = {
+  id: string
+  body: string
+  createdAt: string
+  author: { id: string; firstName: string; lastName: string }
+}
+
+/** The newest or first few of something, with how many there are in all. */
+type Section<T> = { total: number; items: T[] }
+
+/** A section is `null` when the signed-in role may not read that kind of record. */
+export type CompanyOverview = {
+  company: Company
+  contacts: Section<CompanyContact> | null
+  deals:
+    (Section<CompanyDeal> & { open: { currency: string; count: number; value: number }[] }) | null
+  notes: Section<CompanyNote> | null
+}
+
+export const getCompanyOverview = (id: string) =>
+  api.get<CompanyOverview>(`/companies/${id}/overview`).then((r) => r.data)

@@ -643,6 +643,22 @@ export const openapi = {
         },
       },
     },
+    '/companies/{id}/overview': {
+      get: {
+        tags: ['Records'],
+        summary: 'Company with its contacts, deals and notes',
+        description:
+          'Requires `companies:read`. Returns `company` plus `contacts`, `deals` and `notes`, each `{ total, items }` with the first 50 (contacts by name, deals and notes newest first). `deals` also has `open`: count and total value of open deals per currency. A section the caller cannot read (`contacts:read`, `deals:read`, `notes:read`) is `null`.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': { description: 'The company and its related records' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Company not found' },
+        },
+      },
+    },
     '/companies/{id}': {
       get: {
         tags: ['Records'],

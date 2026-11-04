@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 
 import { AppLayout } from '@/components/layout/app-layout'
 import { CompaniesPage } from '@/features/companies/companies-page'
+import { CompanyDetailPage } from '@/features/companies/company-detail-page'
 import { EditCompanyPage } from '@/features/companies/edit-company-page'
 import { NewCompanyPage } from '@/features/companies/new-company-page'
 import { ContactsPage } from '@/features/contacts/contacts-page'
@@ -75,6 +76,11 @@ export const routes = [
                 handle: { crumb: 'Companies' },
                 children: [
                   { index: true, element: <CompaniesPage /> },
+                  {
+                    path: ':id',
+                    element: <CompanyDetailPage />,
+                    handle: { crumb: 'Company' },
+                  },
                   {
                     element: <RequirePermission permission="companies:write" />,
                     children: [

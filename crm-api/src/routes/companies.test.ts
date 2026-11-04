@@ -47,6 +47,9 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
+  await prisma.deal.deleteMany({ where: { title: { contains: String(stamp) } } })
+  await prisma.pipeline.deleteMany({ where: { name: `co-${stamp}` } })
+  await prisma.contact.deleteMany({ where: { lastName: { endsWith: `Co${stamp}` } } })
   await prisma.company.deleteMany({ where: { name: { contains: String(stamp) } } })
   await prisma.user.deleteMany({ where: { email: { in: Object.values(emails) } } })
   await prisma.$disconnect()
@@ -229,5 +232,90 @@ describe('GET /api/companies/details', () => {
 
     expect((await get({ pageSize: 101 })).status).toBe(400)
     expect((await request(app).get('/api/companies/details')).status).toBe(401)
+  })
+})
+
+describe('GET /api/companies/:id/overview', () => {
+  const overview = (who: Who, id: string) =>
+    request(app).get(`/api/companies/${id}/overview`).set(as(who))
+
+  it('gathers the company’s contacts, deals and notes in one response', async () => {
+    const id = (await create('sales', { name: name('Hub') })).body.company.id
+    const other = (await create('sales', { name: name('Other') })).body.company.id
+    const pipeline = await prisma.pipeline.create({
+      data: { name: `co-${stamp}`, stages: { create: { name: 'Proposal', position: 1 } } },
+      include: { stages: true },
+    })
+    const stageId = pipeline.stages[0].id
+    const deal = (title: string, companyId: string, amount: number, status: 'OPEN' | 'WON') =>
+      prisma.deal.create({
+        data: {
+          title: `${title} ${stamp}`,
+          amount,
+          status,
+          companyId,
+          pipelineId: pipeline.id,
+          stageId,
+        },
+      })
+    await deal('Big', id, 1000.5, 'OPEN')
+    await deal('Small', id, 200, 'OPEN')
+    await deal('Done', id, 5000, 'WON')
+    await deal('Elsewhere', other, 999, 'OPEN')
+    await prisma.contact.create({
+      data: { firstName: 'Zoe', lastName: `ZCo${stamp}`, companyId: id },
+    })
+    await prisma.contact.create({
+      data: { firstName: 'Al', lastName: `ACo${stamp}`, email: 'al@x.test', companyId: id },
+    })
+    await prisma.contact.create({
+      data: { firstName: 'No', lastName: `NCo${stamp}`, companyId: other },
+    })
+    await prisma.note.create({
+      data: { body: 'Old', authorId: salesId, companyId: id, createdAt: new Date('2026-01-01') },
+    })
+    await prisma.note.create({
+      data: { body: 'New', authorId: salesId, companyId: id, createdAt: new Date('2026-02-01') },
+    })
+
+    const res = await overview('support', id) // a read-only role may look
+    expect(res.status).toBe(200)
+    expect(res.body.company).toMatchObject({ id, name: name('Hub') })
+    expect(res.body.contacts.total).toBe(2)
+    expect(res.body.contacts.items.map((c: { firstName: string }) => c.firstName)).toEqual([
+      'Al',
+      'Zoe',
+    ])
+    expect(res.body.contacts.items[0]).toMatchObject({ email: 'al@x.test', phone: null })
+    expect(res.body.deals.total).toBe(3)
+    expect(res.body.deals.items.map((d: { title: string }) => d.title).sort()).toEqual(
+      [`Big ${stamp}`, `Done ${stamp}`, `Small ${stamp}`].sort(),
+    )
+    expect(
+      res.body.deals.items.find((d: { title: string }) => d.title.startsWith('Big')),
+    ).toMatchObject({
+      amount: 1000.5,
+      currency: 'USD',
+      status: 'OPEN',
+      stage: 'Proposal',
+    })
+    // Only open deals count towards the open value.
+    expect(res.body.deals.open).toEqual([{ currency: 'USD', count: 2, value: 1200.5 }])
+    expect(res.body.notes.total).toBe(2)
+    expect(res.body.notes.items.map((n: { body: string }) => n.body)).toEqual(['New', 'Old'])
+    expect(res.body.notes.items[0].author).toMatchObject({ id: salesId })
+  })
+
+  it('shows empty sections for a company with nothing yet', async () => {
+    const id = (await create('sales', { name: name('Empty') })).body.company.id
+    const res = await overview('sales', id)
+    expect(res.body.contacts).toEqual({ total: 0, items: [] })
+    expect(res.body.deals).toEqual({ total: 0, items: [], open: [] })
+    expect(res.body.notes).toEqual({ total: 0, items: [] })
+  })
+
+  it('needs login, and 404s for an unknown company', async () => {
+    expect((await request(app).get('/api/companies/x/overview')).status).toBe(401)
+    expect((await overview('sales', 'nope')).status).toBe(404)
   })
 })

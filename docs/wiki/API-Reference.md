@@ -50,6 +50,7 @@ Swagger UI at **http://localhost:4000/api/docs**; the raw spec is at `/api/opena
 | `GET /companies`, `GET /tags` | `companies:read`, `contacts:read` | Suggestions and filter options |
 | `GET /companies/details` | `companies:read` | Companies with industry, employees, revenue, website and counts (search, paging) |
 | `GET /companies/{id}` | `companies:read` | One company |
+| `GET /companies/{id}/overview` | `companies:read` | The company with its contacts, deals and notes (first 50 of each; a section you may not read is `null`) |
 | `POST /companies` | `companies:write` | Create (only `name` required; names unique ignoring case) |
 | `PATCH /companies/{id}` | `companies:write` | Update (only what you send; `null` clears an optional field) |
 | `GET /tags/details` | `contacts:read` | Tags with colour and usage counts |

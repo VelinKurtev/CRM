@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { HttpError } from '../lib/http-error.js'
 import { prisma } from '../lib/prisma.js'
 import { httpUrl, optionalText, requiredText } from '../lib/validation.js'
-import { requirePermission } from '../middleware/authorize.js'
+import { getPermissions, requirePermission } from '../middleware/authorize.js'
 import { parseQuery, validateBody } from '../middleware/validate.js'
 
 export const companiesRouter = Router()
@@ -114,6 +114,110 @@ companiesRouter.get('/companies/details', requirePermission('companies:read'), a
   ])
   res.json({ companies: rows.map(present), total, page, pageSize })
 })
+
+// ───────── Everything about one company ─────────
+
+/** Each section shows the newest or first this many; `total` says how many there are. */
+const SECTION_LIMIT = 50
+
+/**
+ * The company with its contacts, deals and notes, for the detail page. A section the caller may
+ * not read (`contacts:read`, `deals:read`, `notes:read`) comes back as `null`.
+ */
+companiesRouter.get(
+  '/companies/:id/overview',
+  requirePermission('companies:read'),
+  async (req, res) => {
+    const id = idOf(req)
+    const company = await findOne(id)
+    if (!company) throw new HttpError(404, 'Company not found')
+    const can = await getPermissions(req.auth!.userId)
+
+    const [contacts, deals, openDeals, notes] = await Promise.all([
+      can.has('contacts:read')
+        ? Promise.all([
+            prisma.contact.count({ where: { companyId: id } }),
+            prisma.contact.findMany({
+              where: { companyId: id },
+              orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }, { id: 'asc' }],
+              take: SECTION_LIMIT,
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                jobTitle: true,
+                email: true,
+                phone: true,
+              },
+            }),
+          ])
+        : null,
+      can.has('deals:read')
+        ? Promise.all([
+            prisma.deal.count({ where: { companyId: id } }),
+            prisma.deal.findMany({
+              where: { companyId: id },
+              orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+              take: SECTION_LIMIT,
+              select: {
+                id: true,
+                title: true,
+                amount: true,
+                currency: true,
+                status: true,
+                expectedClose: true,
+                stage: { select: { name: true } },
+              },
+            }),
+          ])
+        : null,
+      can.has('deals:read')
+        ? prisma.deal.groupBy({
+            by: ['currency'],
+            where: { companyId: id, status: 'OPEN' },
+            _sum: { amount: true },
+            _count: true,
+          })
+        : null,
+      can.has('notes:read')
+        ? Promise.all([
+            prisma.note.count({ where: { companyId: id } }),
+            prisma.note.findMany({
+              where: { companyId: id },
+              orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+              take: SECTION_LIMIT,
+              select: {
+                id: true,
+                body: true,
+                createdAt: true,
+                author: { select: { id: true, firstName: true, lastName: true } },
+              },
+            }),
+          ])
+        : null,
+    ])
+
+    res.json({
+      company: present(company),
+      contacts: contacts && { total: contacts[0], items: contacts[1] },
+      deals: deals && {
+        total: deals[0],
+        items: deals[1].map(({ amount, stage, ...d }) => ({
+          ...d,
+          amount: Number(amount),
+          stage: stage.name,
+        })),
+        // Open deals' value per currency, since deals may be in different currencies.
+        open: (openDeals ?? []).map((g) => ({
+          currency: g.currency,
+          count: g._count,
+          value: Number(g._sum.amount ?? 0),
+        })),
+      },
+      notes: notes && { total: notes[0], items: notes[1] },
+    })
+  },
+)
 
 // ───────── Create, read, update ─────────
 

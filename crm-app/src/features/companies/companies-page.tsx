@@ -126,13 +126,9 @@ export function CompaniesPage() {
               {data.companies.map((c) => (
                 <TableRow key={c.id}>
                   <TableCell>
-                    {canWrite ? (
-                      <Link to={`/companies/${c.id}/edit`} className="font-medium hover:underline">
-                        {c.name}
-                      </Link>
-                    ) : (
-                      <span className="font-medium">{c.name}</span>
-                    )}
+                    <Link to={`/companies/${c.id}`} className="font-medium hover:underline">
+                      {c.name}
+                    </Link>
                   </TableCell>
                   <TableCell>{c.industry ?? <Dash />}</TableCell>
                   <TableCell className="text-right">

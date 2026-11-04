@@ -58,7 +58,8 @@ export function EditCompanyPage() {
           void queryClient.invalidateQueries({ queryKey: ['companies'] })
           void queryClient.invalidateQueries({ queryKey: ['company-suggestions'] })
           void queryClient.invalidateQueries({ queryKey: ['contact-filter-companies'] })
-          navigate('/companies')
+          void queryClient.invalidateQueries({ queryKey: ['company', id, 'overview'] })
+          navigate(`/companies/${id}`)
         }}
         onCancel={() => navigate(-1)}
       />
