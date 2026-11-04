@@ -92,6 +92,12 @@ Tag contacts on their form, then filter the list by one or more tags (any or all
 Tick rows to add or remove tags on many contacts at once. Managers and admins get a **Tags** page to rename,
 recolour or delete tags.
 
+## Companies
+
+**Companies** in the sidebar lists organizations (search by name or industry). Sales users and above can add and
+edit them: name (required), industry, employees, annual revenue in USD and website. Names are unique whatever
+their letter case. Contacts still link to a company by name on their form.
+
 ## Wiki
 
 The project wiki is written in `docs/wiki/` (reviewed with the code). A workflow (`.github/workflows/wiki.yml`)

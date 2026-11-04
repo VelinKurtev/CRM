@@ -19,6 +19,7 @@ A customer relationship manager: contacts, companies, leads, deals, tasks and re
 - Sign-in, registration, password reset, sessions and roles: [[Authentication and Sessions]]
 - App layout and the dashboard: [[Dashboard]]
 - Contacts: create, edit, delete, search, import and export: [[Contacts]]
+- Companies: create, edit, search: [[Companies]]
 - Running it safely: [[Security and Operations]]
 - Every endpoint: [[API Reference]]
 

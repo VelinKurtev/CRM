@@ -3,6 +3,7 @@
 **Using it**
 - [[Getting Started]]
 - [[Contacts]]
+- [[Companies]]
 - [[Dashboard]]
 - [[Roles and Permissions]]
 

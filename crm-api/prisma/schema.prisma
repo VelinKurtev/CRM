@@ -73,6 +73,8 @@ model Company {
   domain    String?
   industry  String?
   size      String?
+  employees Int?
+  revenue   Decimal? @db.Decimal(16, 2) // annual
   phone     String?
   website   String?
   address   String?

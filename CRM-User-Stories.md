@@ -112,8 +112,9 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
   - [x] Add or remove tags on many contacts at once.
   - [x] Managers and admins can rename, recolour and delete tags.
 
-- [ ] **US-022 – Create and edit company**
+- [x] **US-022 – Create and edit company**
   As a Sales user, I want to manage companies (name, industry, employees, revenue, website), so that organizations are tracked.
+  - [x] Company names are unique whatever their letter case (contacts link to companies by name).
 
 - [ ] **US-023 – Company detail page**
   As a Sales user, I want to see a company's contacts, deals and notes in one page, so that I have the full picture.

@@ -577,6 +577,35 @@ export const openapi = {
       },
     },
     '/companies': {
+      post: {
+        tags: ['Records'],
+        summary: 'Create a company',
+        description:
+          'Requires `companies:write`. Only `name` is required. `employees` is a whole number, `revenue` is annual with at most two decimals, `website` an http(s) link. Names are unique whatever their letter case (409). The caller becomes the owner.',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/CompanyInput' },
+              example: {
+                name: 'Acme',
+                industry: 'Manufacturing',
+                employees: 250,
+                revenue: 12500000,
+                website: 'https://acme.example.com',
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: '`{ company }`' },
+          '400': { description: 'Validation failed' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '409': { description: 'A company with this name exists' },
+        },
+      },
       get: {
         tags: ['Records'],
         summary: 'Search companies',
@@ -591,6 +620,63 @@ export const openapi = {
           '200': { description: '`{ companies: [{ id, name }] }`' },
           '401': { $ref: '#/components/responses/Unauthorized' },
           '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/companies/details': {
+      get: {
+        tags: ['Records'],
+        summary: 'List companies',
+        description:
+          'Requires `companies:read`. Companies whose name or industry contains `q`, by name, with `industry`, `employees`, `revenue`, `website`, `owner` and `contactCount` / `dealCount`. Paged (default 20, up to 100).',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'q', in: 'query', schema: { type: 'string' } },
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'pageSize', in: 'query', schema: { type: 'integer', default: 20, maximum: 100 } },
+        ],
+        responses: {
+          '200': { description: '`{ companies, total, page, pageSize }`' },
+          '400': { description: 'Invalid query' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/companies/{id}': {
+      get: {
+        tags: ['Records'],
+        summary: 'Get a company',
+        description: 'Requires `companies:read`.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': { description: '`{ company }`' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Company not found' },
+        },
+      },
+      patch: {
+        tags: ['Records'],
+        summary: 'Edit a company',
+        description:
+          'Requires `companies:write`. Send only what changes: a field left out is kept, `null` clears `industry`, `employees`, `revenue` or `website`. The name cannot be cleared and must not match another company, whatever its letter case (409).',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/CompanyInput' } },
+          },
+        },
+        responses: {
+          '200': { description: '`{ company }`' },
+          '400': { description: 'Validation failed' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Company not found' },
+          '409': { description: 'Another company has this name' },
         },
       },
     },
@@ -990,6 +1076,21 @@ export const openapi = {
       },
     },
     schemas: {
+      CompanyInput: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', maxLength: 200 },
+          industry: { type: 'string', maxLength: 100, nullable: true },
+          employees: { type: 'integer', minimum: 0, nullable: true },
+          revenue: {
+            type: 'number',
+            minimum: 0,
+            nullable: true,
+            description: 'Annual, 2 decimals',
+          },
+          website: { type: 'string', format: 'uri', nullable: true },
+        },
+      },
       Error: {
         type: 'object',
         properties: {

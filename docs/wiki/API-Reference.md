@@ -48,6 +48,10 @@ Swagger UI at **http://localhost:4000/api/docs**; the raw spec is at `/api/opena
 | `POST /contacts/import` | `contacts:write` | Import CSV (`?dryRun=true` to preview) |
 | `GET /contacts/export` | `contacts:export` | Download CSV of what matches the filters |
 | `GET /companies`, `GET /tags` | `companies:read`, `contacts:read` | Suggestions and filter options |
+| `GET /companies/details` | `companies:read` | Companies with industry, employees, revenue, website and counts (search, paging) |
+| `GET /companies/{id}` | `companies:read` | One company |
+| `POST /companies` | `companies:write` | Create (only `name` required; names unique ignoring case) |
+| `PATCH /companies/{id}` | `companies:write` | Update (only what you send; `null` clears an optional field) |
 | `GET /tags/details` | `contacts:read` | Tags with colour and usage counts |
 | `PATCH /tags/{id}`, `DELETE /tags/{id}` | `tags:manage` | Rename or recolour; delete (removes it from every record) |
 | `POST /contacts/bulk-tags` | `contacts:write` | Add and/or remove tags on up to 500 contacts, all or nothing |
