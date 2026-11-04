@@ -6,6 +6,7 @@ import { CompanyDetailPage } from '@/features/companies/company-detail-page'
 import { EditCompanyPage } from '@/features/companies/edit-company-page'
 import { NewCompanyPage } from '@/features/companies/new-company-page'
 import { ContactsPage } from '@/features/contacts/contacts-page'
+import { ContactDetailPage } from '@/features/contacts/contact-detail-page'
 import { ImportContactsPage } from '@/features/contacts/import-contacts-page'
 import { EditContactPage } from '@/features/contacts/edit-contact-page'
 import { NewContactPage } from '@/features/contacts/new-contact-page'
@@ -44,6 +45,11 @@ export const routes = [
                 handle: { crumb: 'Contacts' },
                 children: [
                   { index: true, element: <ContactsPage /> },
+                  {
+                    path: ':id',
+                    element: <ContactDetailPage />,
+                    handle: { crumb: 'Contact' },
+                  },
                   {
                     element: <RequirePermission permission="contacts:write" />,
                     children: [

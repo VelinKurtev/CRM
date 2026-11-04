@@ -42,6 +42,7 @@ Swagger UI at **http://localhost:4000/api/docs**; the raw spec is at `/api/opena
 | --- | --- | --- |
 | `GET /contacts` | `contacts:read` | List with search, filters, sort and paging |
 | `POST /contacts` | `contacts:write` | Create |
+| `GET /contacts/{id}/overview` | `contacts:read` | The contact with its activities, tasks, emails and notes (first 50 of each; a section you may not read is `null`) |
 | `GET /contacts/{id}` | `contacts:read` | One contact, with what deleting it would affect and whether you may delete it |
 | `PATCH /contacts/{id}` | `contacts:write` | Update (only what you send; `null` clears a field) |
 | `DELETE /contacts/{id}` | `contacts:delete`, or `contacts:delete_own` for your own | Delete |

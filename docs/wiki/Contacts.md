@@ -38,6 +38,20 @@ a contact can have up to 20.
   to a name another tag already has is refused.
 - Bulk tagging, renames and deletes are recorded in the audit log.
 
+## Contact page
+
+Click a contact's name in the list to open their page: the details, tags and links at the top (the company links to
+its page), then the relationship history.
+
+- **Activities:** calls, meetings and so on, newest first, with who logged them.
+- **Tasks:** unfinished first, soonest due first. Overdue ones are flagged; finished ones are struck through.
+- **Emails:** subject, from → to and date; unsent ones are marked *Draft*.
+- **Notes:** newest first, with author and date.
+
+Each list shows the first 50 and says how many there are in all. A section only appears if your role may read that
+kind of record. **Edit contact** appears for people who can write. Logging activities, tasks and emails, and adding
+notes, arrives in later stories, so those sections stay empty until then.
+
 ## Edit and delete
 
 - **Edit** (`contacts:write`): from the contact's name in the list. Clear a field to remove its value.

@@ -205,3 +205,61 @@ export const exportContacts = (params: ExportParams) =>
       }
       throw error
     })
+
+type Person = { id: string; firstName: string; lastName: string }
+/** The first few of something, with how many there are in all. */
+type Section<T> = { total: number; items: T[] }
+
+export type ActivityType = 'CALL' | 'EMAIL' | 'MEETING' | 'NOTE' | 'OTHER'
+export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE'
+
+export type ContactOverview = {
+  contact: {
+    id: string
+    firstName: string
+    lastName: string
+    email: string | null
+    phone: string | null
+    jobTitle: string | null
+    address: string | null
+    city: string | null
+    postalCode: string | null
+    country: string | null
+    linkedinUrl: string | null
+    twitterUrl: string | null
+    facebookUrl: string | null
+    createdAt: string
+    company: { id: string; name: string } | null
+    owner: Person | null
+    tags: string[]
+  }
+  /** A section is `null` when the signed-in role may not read that kind of record. */
+  activities: Section<{
+    id: string
+    type: ActivityType
+    subject: string
+    description: string | null
+    occurredAt: string
+    user: Person
+  }> | null
+  tasks: Section<{
+    id: string
+    title: string
+    status: TaskStatus
+    dueDate: string | null
+    assignee: Person | null
+  }> | null
+  emails: Section<{
+    id: string
+    subject: string
+    fromAddr: string
+    toAddr: string
+    /** Null for a draft that was never sent. */
+    sentAt: string | null
+    createdAt: string
+  }> | null
+  notes: Section<{ id: string; body: string; createdAt: string; author: Person }> | null
+}
+
+export const getContactOverview = (id: string) =>
+  api.get<ContactOverview>(`/contacts/${id}/overview`).then((r) => r.data)

@@ -268,10 +268,9 @@ describe('Contacts list', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not load contacts')
   })
 
-  it('lets read-only roles look but not create or edit', async () => {
+  it('lets read-only roles look but not create', async () => {
     renderList('/contacts', ['contacts:read'])
     expect(await screen.findByText('Alice Adams')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Alice Adams' })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /New contact/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Import CSV/ })).not.toBeInTheDocument()
   })
@@ -284,11 +283,11 @@ describe('Contacts list', () => {
     )
   })
 
-  it('links names to the edit page for people who can edit', async () => {
-    renderList()
+  it('links each name to the contact page, for everyone who can read', async () => {
+    renderList('/contacts', ['contacts:read'])
     expect(await screen.findByRole('link', { name: 'Alice Adams' })).toHaveAttribute(
       'href',
-      '/contacts/c1/edit',
+      '/contacts/c1',
     )
   })
 

@@ -520,6 +520,22 @@ export const openapi = {
         },
       },
     },
+    '/contacts/{id}/overview': {
+      get: {
+        tags: ['Records'],
+        summary: 'Contact with its relationship history',
+        description:
+          'Requires `contacts:read`. Returns `contact` (with company, owner and tags) plus `activities` (newest first), `tasks` (unfinished first, soonest due first), `emails` and `notes` (newest first), each `{ total, items }` with the first 50. A section the caller cannot read (`activities:read`, `tasks:read`, `emails:read`, `notes:read`) is `null`.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': { description: 'The contact and its history' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Contact not found' },
+        },
+      },
+    },
     '/contacts/{id}': {
       get: {
         tags: ['Records'],

@@ -348,13 +348,9 @@ export function ContactsPage() {
                       </TableCell>
                     )}
                     <TableCell>
-                      {canWrite ? (
-                        <Link to={`/contacts/${c.id}/edit`} className="font-medium hover:underline">
-                          {name}
-                        </Link>
-                      ) : (
-                        <span className="font-medium">{name}</span>
-                      )}
+                      <Link to={`/contacts/${c.id}`} className="font-medium hover:underline">
+                        {name}
+                      </Link>
                       {c.jobTitle && (
                         <div className="text-xs text-muted-foreground">{c.jobTitle}</div>
                       )}

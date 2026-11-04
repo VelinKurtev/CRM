@@ -196,6 +196,125 @@ contactsRouter.get('/contacts/:id', requirePermission('contacts:read'), async (r
   })
 })
 
+/** Each section of the contact page shows this many (newest or most urgent first). */
+const SECTION_LIMIT = 50
+
+/**
+ * The contact with its relationship history for the detail page: activities, tasks, emails and
+ * notes. A section the caller may not read (`activities:read`, `tasks:read`, `emails:read`,
+ * `notes:read`) comes back as `null`.
+ */
+contactsRouter.get(
+  '/contacts/:id/overview',
+  requirePermission('contacts:read'),
+  async (req, res) => {
+    const id = idOf(req)
+    const contact = await prisma.contact.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        jobTitle: true,
+        address: true,
+        city: true,
+        postalCode: true,
+        country: true,
+        linkedinUrl: true,
+        twitterUrl: true,
+        facebookUrl: true,
+        createdAt: true,
+        company: { select: { id: true, name: true } },
+        owner: { select: { id: true, firstName: true, lastName: true } },
+        tags: { select: { tag: { select: { name: true } } } },
+      },
+    })
+    if (!contact) throw new HttpError(404, 'Contact not found')
+    const can = await getPermissions(req.auth!.userId)
+    const where = { contactId: id }
+    const person = { select: { id: true, firstName: true, lastName: true } }
+
+    const [activities, tasks, emails, notes] = await Promise.all([
+      can.has('activities:read')
+        ? Promise.all([
+            prisma.activity.count({ where }),
+            prisma.activity.findMany({
+              where,
+              orderBy: [{ occurredAt: 'desc' }, { id: 'asc' }],
+              take: SECTION_LIMIT,
+              select: {
+                id: true,
+                type: true,
+                subject: true,
+                description: true,
+                occurredAt: true,
+                user: person,
+              },
+            }),
+          ])
+        : null,
+      can.has('tasks:read')
+        ? Promise.all([
+            prisma.task.count({ where }),
+            prisma.task.findMany({
+              where,
+              // Unfinished work first, soonest due first; finished tasks after.
+              orderBy: [
+                { status: 'asc' },
+                { dueDate: { sort: 'asc', nulls: 'last' } },
+                { id: 'asc' },
+              ],
+              take: SECTION_LIMIT,
+              select: { id: true, title: true, status: true, dueDate: true, assignee: person },
+            }),
+          ])
+        : null,
+      can.has('emails:read')
+        ? Promise.all([
+            prisma.email.count({ where }),
+            prisma.email.findMany({
+              where,
+              orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+              take: SECTION_LIMIT,
+              select: {
+                id: true,
+                subject: true,
+                fromAddr: true,
+                toAddr: true,
+                sentAt: true,
+                createdAt: true,
+              },
+            }),
+          ])
+        : null,
+      can.has('notes:read')
+        ? Promise.all([
+            prisma.note.count({ where }),
+            prisma.note.findMany({
+              where,
+              orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+              take: SECTION_LIMIT,
+              select: { id: true, body: true, createdAt: true, author: person },
+            }),
+          ])
+        : null,
+    ])
+
+    const { tags, ...rest } = contact
+    const section = <T>(found: [number, T[]] | null) =>
+      found && { total: found[0], items: found[1] }
+    res.json({
+      contact: { ...rest, tags: tags.map((t) => t.tag.name).sort() },
+      activities: section(activities),
+      tasks: section(tasks),
+      emails: section(emails),
+      notes: section(notes),
+    })
+  },
+)
+
 contactsRouter.patch(
   '/contacts/:id',
   requirePermission('contacts:write'),

@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { Building2, ExternalLink, Pencil } from 'lucide-react'
-import type { ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
+import { formatDate } from '@/utils/format-date'
 import { getErrorMessage } from '@/api/client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
+import { DetailSection, EmptyNote, Fact, None } from '@/components/detail-section'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -26,60 +27,11 @@ const money = (amount: number, currency: string) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(
     amount,
   )
-const date = (iso: string) => new Date(iso).toLocaleDateString('en-US', { dateStyle: 'medium' })
-
 const STATUS_LABEL: Record<CompanyDeal['status'], string> = {
   OPEN: 'Open',
   WON: 'Won',
   LOST: 'Lost',
 }
-
-function Section({
-  title,
-  total,
-  shown,
-  children,
-}: {
-  title: string
-  total: number
-  shown: number
-  children: ReactNode
-}) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <h2>
-            {title} <span className="font-normal text-muted-foreground">({total})</span>
-          </h2>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {children}
-        {total > shown && (
-          <p className="text-sm text-muted-foreground">
-            Showing {shown} of {total}.
-          </p>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-const Empty = ({ children }: { children: ReactNode }) => (
-  <p className="text-sm text-muted-foreground">{children}</p>
-)
-
-function Fact({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div>
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="font-medium">{children}</dd>
-    </div>
-  )
-}
-
-const none = <span className="text-muted-foreground">—</span>
 
 export function CompanyDetailPage() {
   const { id = '' } = useParams()
@@ -144,26 +96,26 @@ export function CompanyDetailPage() {
                   <ExternalLink className="size-3" aria-hidden />
                 </a>
               ) : (
-                none
+                <None />
               )}
             </Fact>
             <Fact label="Employees">
-              {company.employees === null ? none : company.employees.toLocaleString('en-US')}
+              {company.employees === null ? <None /> : company.employees.toLocaleString('en-US')}
             </Fact>
             <Fact label="Annual revenue">
-              {company.revenue === null ? none : formatMoney(company.revenue)}
+              {company.revenue === null ? <None /> : formatMoney(company.revenue)}
             </Fact>
             <Fact label="Owner">
-              {company.owner ? `${company.owner.firstName} ${company.owner.lastName}` : none}
+              {company.owner ? `${company.owner.firstName} ${company.owner.lastName}` : <None />}
             </Fact>
           </dl>
         </CardContent>
       </Card>
 
       {contacts && (
-        <Section title="Contacts" total={contacts.total} shown={contacts.items.length}>
+        <DetailSection title="Contacts" total={contacts.total} shown={contacts.items.length}>
           {contacts.items.length === 0 ? (
-            <Empty>No contacts at this company yet.</Empty>
+            <EmptyNote>No contacts at this company yet.</EmptyNote>
           ) : (
             <Table>
               <TableHeader>
@@ -188,28 +140,28 @@ export function CompanyDetailPage() {
                           name
                         )}
                       </TableCell>
-                      <TableCell>{c.jobTitle ?? none}</TableCell>
+                      <TableCell>{c.jobTitle ?? <None />}</TableCell>
                       <TableCell>
                         {c.email ? (
                           <a href={`mailto:${c.email}`} className="hover:underline">
                             {c.email}
                           </a>
                         ) : (
-                          none
+                          <None />
                         )}
                       </TableCell>
-                      <TableCell>{c.phone ?? none}</TableCell>
+                      <TableCell>{c.phone ?? <None />}</TableCell>
                     </TableRow>
                   )
                 })}
               </TableBody>
             </Table>
           )}
-        </Section>
+        </DetailSection>
       )}
 
       {deals && (
-        <Section title="Deals" total={deals.total} shown={deals.items.length}>
+        <DetailSection title="Deals" total={deals.total} shown={deals.items.length}>
           {deals.open.length > 0 && (
             <p className="text-sm">
               Open:{' '}
@@ -222,7 +174,7 @@ export function CompanyDetailPage() {
             </p>
           )}
           {deals.items.length === 0 ? (
-            <Empty>No deals with this company yet.</Empty>
+            <EmptyNote>No deals with this company yet.</EmptyNote>
           ) : (
             <Table>
               <TableHeader>
@@ -245,32 +197,34 @@ export function CompanyDetailPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">{money(d.amount, d.currency)}</TableCell>
-                    <TableCell>{d.expectedClose ? date(d.expectedClose) : none}</TableCell>
+                    <TableCell>
+                      {d.expectedClose ? formatDate(d.expectedClose) : <None />}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           )}
-        </Section>
+        </DetailSection>
       )}
 
       {notes && (
-        <Section title="Notes" total={notes.total} shown={notes.items.length}>
+        <DetailSection title="Notes" total={notes.total} shown={notes.items.length}>
           {notes.items.length === 0 ? (
-            <Empty>No notes on this company yet.</Empty>
+            <EmptyNote>No notes on this company yet.</EmptyNote>
           ) : (
             <ul className="space-y-3">
               {notes.items.map((n) => (
                 <li key={n.id} className="rounded-md border p-3">
                   <p className="text-sm whitespace-pre-wrap">{n.body}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {n.author.firstName} {n.author.lastName} · {date(n.createdAt)}
+                    {n.author.firstName} {n.author.lastName} · {formatDate(n.createdAt)}
                   </p>
                 </li>
               ))}
             </ul>
           )}
-        </Section>
+        </DetailSection>
       )}
     </div>
   )

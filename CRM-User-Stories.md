@@ -119,7 +119,7 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
 - [x] **US-023 – Company detail page**
   As a Sales user, I want to see a company's contacts, deals and notes in one page, so that I have the full picture.
 
-- [ ] **US-024 – Contact detail page**
+- [x] **US-024 – Contact detail page**
   As a Sales user, I want a contact page showing activities, tasks and emails, so that I see the full relationship history.
 
 - [ ] **US-025 – Notes on customers**

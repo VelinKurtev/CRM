@@ -57,6 +57,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
+  await prisma.email.deleteMany({ where: { subject: { contains: String(stamp) } } })
   await prisma.deal.deleteMany({ where: { title: `ct-${stamp}-deal` } })
   await prisma.pipeline.deleteMany({ where: { name: `ct-${stamp}` } })
   await prisma.auditLog.deleteMany({
@@ -344,5 +345,130 @@ describe('DELETE /api/contacts/:id', () => {
     expect(await prisma.deal.findUnique({ where: { id: deal.id } })).toMatchObject({
       contactId: null,
     })
+  })
+})
+
+describe('GET /api/contacts/:id/overview', () => {
+  const overview = (who: keyof typeof tokens, id: string) =>
+    get(who, `/api/contacts/${id}/overview`)
+
+  it('gathers the contact’s activities, tasks, emails and notes', async () => {
+    const created = await post('sales', {
+      firstName: 'Hist',
+      lastName: last,
+      company: companyName,
+      tags: [tagB, tagA],
+      note: 'First call went well',
+    })
+    const id = created.body.contact.id as string
+    const day = (d: string) => new Date(`${d}T12:00:00Z`)
+    await prisma.activity.createMany({
+      data: [
+        {
+          type: 'CALL',
+          subject: `Old call ${stamp}`,
+          occurredAt: day('2026-01-01'),
+          userId: salesId,
+          contactId: id,
+        },
+        {
+          type: 'MEETING',
+          subject: `New meeting ${stamp}`,
+          occurredAt: day('2026-03-01'),
+          userId: salesId,
+          contactId: id,
+        },
+      ],
+    })
+    await prisma.task.createMany({
+      data: [
+        {
+          title: `Done ${stamp}`,
+          status: 'DONE',
+          dueDate: day('2026-01-01'),
+          creatorId: salesId,
+          contactId: id,
+        },
+        {
+          title: `Later ${stamp}`,
+          status: 'TODO',
+          dueDate: day('2026-06-01'),
+          creatorId: salesId,
+          contactId: id,
+        },
+        {
+          title: `Soon ${stamp}`,
+          status: 'TODO',
+          dueDate: day('2026-02-01'),
+          assigneeId: salesId,
+          creatorId: salesId,
+          contactId: id,
+        },
+        { title: `Undated ${stamp}`, status: 'TODO', creatorId: salesId, contactId: id },
+      ],
+    })
+    await prisma.email.create({
+      data: {
+        subject: `Hello ${stamp}`,
+        body: 'Hi',
+        fromAddr: 'a@x.test',
+        toAddr: 'b@x.test',
+        userId: salesId,
+        contactId: id,
+      },
+    })
+
+    const res = await overview('support', id) // read-only roles may look
+    expect(res.status).toBe(200)
+    expect(res.body.contact).toMatchObject({
+      id,
+      firstName: 'Hist',
+      company: { name: companyName },
+      owner: { id: salesId },
+      tags: [tagA, tagB].sort(),
+    })
+    expect(res.body.activities.total).toBe(2)
+    expect(res.body.activities.items.map((a: { subject: string }) => a.subject)).toEqual([
+      `New meeting ${stamp}`,
+      `Old call ${stamp}`,
+    ])
+    expect(res.body.activities.items[0]).toMatchObject({ type: 'MEETING', user: { id: salesId } })
+    // Open tasks first, soonest due first, undated last; finished ones after.
+    expect(res.body.tasks.items.map((t: { title: string }) => t.title)).toEqual([
+      `Soon ${stamp}`,
+      `Later ${stamp}`,
+      `Undated ${stamp}`,
+      `Done ${stamp}`,
+    ])
+    expect(res.body.tasks.items[0].assignee).toMatchObject({ id: salesId })
+    expect(res.body.emails.items).toEqual([
+      expect.objectContaining({ subject: `Hello ${stamp}`, toAddr: 'b@x.test', sentAt: null }),
+    ])
+    expect(res.body.notes.items.map((n: { body: string }) => n.body)).toEqual([
+      'First call went well',
+    ])
+  })
+
+  it('shows empty sections for a contact with no history', async () => {
+    const id = (await post('sales', { firstName: 'Quiet', lastName: last })).body.contact.id
+    const res = await overview('sales', id)
+    for (const key of ['activities', 'tasks', 'emails', 'notes']) {
+      expect(res.body[key]).toEqual({ total: 0, items: [] })
+    }
+    expect(res.body.contact).toMatchObject({ tags: [], company: null })
+  })
+
+  it('does not mix up other contacts’ history', async () => {
+    const a = (await post('sales', { firstName: 'A', lastName: last })).body.contact.id
+    const b = (await post('sales', { firstName: 'B', lastName: last })).body.contact.id
+    await prisma.task.create({
+      data: { title: `Only A ${stamp}`, creatorId: salesId, contactId: a },
+    })
+    expect((await overview('sales', b)).body.tasks.total).toBe(0)
+  })
+
+  it('needs login and contacts:read, and 404s for an unknown contact', async () => {
+    expect((await request(app).get('/api/contacts/x/overview')).status).toBe(401)
+    expect((await overview('sales', 'nope')).status).toBe(404)
   })
 })

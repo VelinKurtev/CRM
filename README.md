@@ -92,6 +92,11 @@ Tag contacts on their form, then filter the list by one or more tags (any or all
 Tick rows to add or remove tags on many contacts at once. Managers and admins get a **Tags** page to rename,
 recolour or delete tags.
 
+## Contact page
+
+Click a contact's name for their page: details, tags and links, then their activities, tasks, emails and notes
+in one place.
+
 ## Companies
 
 **Companies** in the sidebar lists organizations (search by name or industry). Sales users and above can add and
