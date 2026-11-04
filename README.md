@@ -7,7 +7,7 @@ A CRM built with React (`crm-app`) and an Express + Prisma + PostgreSQL API (`cr
 | `crm-api` | REST API (Express 5, Prisma, PostgreSQL, JWT auth with refresh cookies) |
 | `crm-app` | Web app (React, Vite, Tailwind, shadcn/ui, TanStack Query) |
 
-User stories live in `CRM-User-Stories.md`; cross-cutting API items in `CRM-API-Readiness-Checklist.md`.
+User stories live in `CRM-User-Stories.md`, which opens with a progress bar for each phase (after ticking a story, run `node scripts/update-progress.mjs` to refresh it; add `--check` to verify it in CI); cross-cutting API items in `CRM-API-Readiness-Checklist.md`.
 
 ## Prerequisites
 
