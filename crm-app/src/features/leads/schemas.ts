@@ -15,11 +15,13 @@ export const PRIORITY_LABELS: Record<LeadPriority, string> = {
 }
 
 export const STATUS_LABELS: Record<LeadStatus, string> = {
-  NEW: 'New',
+  NEW: 'New Lead',
   CONTACTED: 'Contacted',
   QUALIFIED: 'Qualified',
-  UNQUALIFIED: 'Unqualified',
-  CONVERTED: 'Converted',
+  PROPOSAL_SENT: 'Proposal Sent',
+  NEGOTIATION: 'Negotiation',
+  WON: 'Won',
+  LOST: 'Lost',
 }
 
 export const leadSchema = z.object({

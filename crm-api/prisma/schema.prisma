@@ -130,8 +130,10 @@ enum LeadStatus {
   NEW
   CONTACTED
   QUALIFIED
-  UNQUALIFIED
-  CONVERTED
+  PROPOSAL_SENT
+  NEGOTIATION
+  WON
+  LOST
 }
 
 enum LeadPriority {

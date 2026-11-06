@@ -63,6 +63,16 @@ const apiError = (status: number, message: string, details?: object) =>
     data: { error: { message, details } },
   } as AxiosResponse)
 
+const counts: leads.LeadsPage['stageCounts'] = {
+  NEW: 1,
+  CONTACTED: 1,
+  QUALIFIED: 0,
+  PROPOSAL_SENT: 0,
+  NEGOTIATION: 0,
+  WON: 0,
+  LOST: 0,
+}
+
 const lastList = () => vi.mocked(leads.listLeads).mock.lastCall![0]
 
 beforeEach(() => {
@@ -72,6 +82,7 @@ beforeEach(() => {
     total: 2,
     page: 1,
     pageSize: 20,
+    stageCounts: counts,
   })
   vi.mocked(leads.listLeadOwners).mockResolvedValue([
     { id: '1', firstName: 'Ann', lastName: 'Lee' },
@@ -86,7 +97,7 @@ describe('Leads list', () => {
     expect(within(row).getByText('Trade show')).toBeInTheDocument()
     expect(within(row).getByText('$15,001')).toBeInTheDocument()
     expect(within(row).getByText('High')).toBeInTheDocument()
-    expect(within(row).getByText('Contacted')).toBeInTheDocument()
+    expect(within(row).getByLabelText('Stage for Website redesign')).toHaveValue('CONTACTED')
     expect(within(row).getByText('Bob Ray')).toBeInTheDocument()
     const blank = screen.getByText('Cold enquiry').closest('tr')!
     expect(within(blank).getAllByText('None')).toHaveLength(3)
@@ -121,6 +132,49 @@ describe('Leads list', () => {
     expect(lastList()).toMatchObject({ status: 'QUALIFIED', priority: 'HIGH' })
   })
 
+  it('shows how many leads are in each stage, in pipeline order, and filters on click', async () => {
+    const router = renderAt('/leads')
+    await screen.findByText('Website redesign')
+    const stages = within(screen.getByRole('navigation', { name: 'Pipeline stages' }))
+    expect(stages.getAllByRole('button').map((b) => b.textContent)).toEqual([
+      'New Lead1',
+      'Contacted1',
+      'Qualified0',
+      'Proposal Sent0',
+      'Negotiation0',
+      'Won0',
+      'Lost0',
+    ])
+    await userEvent.click(stages.getByRole('button', { name: /Proposal Sent/ }))
+    await waitFor(() => expect(lastList()).toMatchObject({ status: 'PROPOSAL_SENT', page: 1 }))
+    expect(router.state.location.search).toBe('?status=PROPOSAL_SENT')
+    expect(stages.getByRole('button', { name: /Proposal Sent/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    await userEvent.click(stages.getByRole('button', { name: /Proposal Sent/ }))
+    await waitFor(() => expect(router.state.location.search).toBe(''))
+  })
+
+  it('moves a lead to another stage from the list', async () => {
+    vi.mocked(leads.setLeadStage).mockResolvedValue({ ...hot, status: 'NEGOTIATION' })
+    renderAt('/leads')
+    await screen.findByText('Website redesign')
+    await userEvent.selectOptions(
+      screen.getByLabelText('Stage for Website redesign'),
+      'NEGOTIATION',
+    )
+    await waitFor(() => expect(leads.setLeadStage).toHaveBeenCalledWith('l1', 'NEGOTIATION'))
+    await waitFor(() => expect(leads.listLeads).toHaveBeenCalledTimes(2))
+  })
+
+  it('only shows the stage, without a control, to read-only roles', async () => {
+    renderAt('/leads', ['leads:read'])
+    const row = (await screen.findByText('Website redesign')).closest('tr')!
+    expect(within(row).getByText('Contacted')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/Stage for/)).not.toBeInTheDocument()
+  })
+
   it('offers New lead and Edit to writers only', async () => {
     renderAt('/leads')
     await screen.findByText('Website redesign')
@@ -139,7 +193,13 @@ describe('Leads list', () => {
   })
 
   it('has empty states for no leads and no matches', async () => {
-    vi.mocked(leads.listLeads).mockResolvedValue({ leads: [], total: 0, page: 1, pageSize: 20 })
+    vi.mocked(leads.listLeads).mockResolvedValue({
+      leads: [],
+      total: 0,
+      page: 1,
+      pageSize: 20,
+      stageCounts: counts,
+    })
     const router = renderAt('/leads')
     expect(await screen.findByText('No leads yet')).toBeInTheDocument()
     router.navigate('/leads?q=zzz')
@@ -168,7 +228,7 @@ describe('New lead', () => {
     await userEvent.type(screen.getByLabelText('Source (optional)'), 'Trade show')
     await userEvent.type(screen.getByLabelText('Estimated value in USD (optional)'), '15000.50')
     await userEvent.selectOptions(screen.getByLabelText('Priority'), 'HIGH')
-    await userEvent.selectOptions(screen.getByLabelText('Status'), 'CONTACTED')
+    await userEvent.selectOptions(screen.getByLabelText('Stage'), 'CONTACTED')
     await screen.findByRole('option', { name: 'Bob Ray' })
     await userEvent.selectOptions(screen.getByLabelText('Owner'), '2')
     await userEvent.type(screen.getByLabelText('Notes (optional)'), 'Wants a demo')
@@ -248,7 +308,7 @@ describe('Edit lead', () => {
     expect(title).toHaveValue('Website redesign')
     expect(screen.getByLabelText('Estimated value in USD (optional)')).toHaveValue('15000.5')
     expect(screen.getByLabelText('Priority')).toHaveValue('HIGH')
-    expect(screen.getByLabelText('Status')).toHaveValue('CONTACTED')
+    expect(screen.getByLabelText('Stage')).toHaveValue('CONTACTED')
     expect(screen.getByLabelText('Notes (optional)')).toHaveValue('Wants a demo')
     await waitFor(() => expect(screen.getByLabelText('Owner')).toHaveValue('2'))
 
@@ -256,7 +316,7 @@ describe('Edit lead', () => {
     await userEvent.type(title, 'Redesign')
     await userEvent.clear(screen.getByLabelText('Source (optional)'))
     await userEvent.clear(screen.getByLabelText('Notes (optional)'))
-    await userEvent.selectOptions(screen.getByLabelText('Status'), 'QUALIFIED')
+    await userEvent.selectOptions(screen.getByLabelText('Stage'), 'QUALIFIED')
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
     await waitFor(() =>

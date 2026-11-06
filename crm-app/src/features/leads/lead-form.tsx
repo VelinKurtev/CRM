@@ -136,7 +136,7 @@ export function LeadForm<T>({
             )}
             {choice(
               'status',
-              'Status',
+              'Stage',
               LEAD_STATUSES.map((s) => ({ value: s, label: STATUS_LABELS[s] })),
             )}
             <div className="sm:col-span-2">

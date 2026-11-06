@@ -105,7 +105,7 @@ describe('POST /api/leads', () => {
       [{ title: title('v'), value: 1.234 }, 'value'],
       [{ title: title('v'), value: '5' }, 'value'],
       [{ title: title('v'), priority: 'URGENT' }, 'priority'],
-      [{ title: title('v'), status: 'WON' }, 'status'],
+      [{ title: title('v'), status: 'CONVERTED' }, 'status'],
       [{ title: title('v'), notes: 'x'.repeat(5001) }, 'notes'],
     ]
     for (const [body, field] of cases) {
@@ -180,6 +180,33 @@ describe('PATCH /api/leads/:id', () => {
   })
 })
 
+describe('pipeline stages', () => {
+  const STAGES = ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL_SENT', 'NEGOTIATION', 'WON', 'LOST']
+
+  it('moves a lead through every stage, and the old stages are gone', async () => {
+    const id = (await create('sales', { title: title('Walk') })).body.lead.id as string
+    for (const stage of STAGES) {
+      const res = await patch('sales', id, { status: stage })
+      expect(res.status, stage).toBe(200)
+      expect(res.body.lead.status).toBe(stage)
+    }
+    for (const old of ['UNQUALIFIED', 'CONVERTED']) {
+      expect((await patch('sales', id, { status: old })).status).toBe(400)
+    }
+  })
+
+  it('counts leads per stage under the search, whichever stage is chosen', async () => {
+    const q = `Count${stamp}`
+    await create('sales', { title: `${q} a`, status: 'NEGOTIATION' })
+    await create('sales', { title: `${q} b`, status: 'NEGOTIATION' })
+    await create('sales', { title: `${q} c`, status: 'LOST' })
+    const res = await request(app).get('/api/leads').query({ q, status: 'LOST' }).set(as('sales'))
+    expect(res.body.total).toBe(1)
+    expect(Object.keys(res.body.stageCounts)).toEqual(STAGES)
+    expect(res.body.stageCounts).toMatchObject({ NEGOTIATION: 2, LOST: 1, NEW: 0, WON: 0 })
+  })
+})
+
 describe('GET /api/leads', () => {
   it('lists, searches and filters, newest first, and reads one lead', async () => {
     const a = (await create('sales', { title: title('Zed'), source: 'Referral', priority: 'HIGH' }))
@@ -209,7 +236,7 @@ describe('GET /api/leads', () => {
     expect(bySource.body.leads.map((l: { id: string }) => l.id)).toContain(a.id)
     const none = await request(app)
       .get('/api/leads')
-      .query({ q: String(stamp), priority: 'LOW', status: 'CONVERTED' })
+      .query({ q: String(stamp), priority: 'LOW', status: 'WON' })
       .set(as('sales'))
     expect(none.body.total).toBe(0)
 

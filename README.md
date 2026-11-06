@@ -110,7 +110,7 @@ their letter case. Click a name for the company page: its contacts, deals and no
 
 ## Leads
 
-**Leads** in the sidebar lists potential customers, newest first (search by title or source, filter by status and
+**Leads** in the sidebar lists potential customers, newest first (search by title or source, filter by stage and
 priority). Sales users and above can add and edit them: title (required), source, estimated value in USD, priority
 (low, medium, high), status, owner and notes. A new lead is *New*, *Medium* priority and owned by whoever creates it;
 the owner can be any active user.

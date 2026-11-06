@@ -20,10 +20,16 @@ const value = z
   .max(999_999_999_999, 'That value is too large')
   .refine((v) => Math.round(v * 100) / 100 === v, 'Use at most two decimal places')
 const priority = z.enum(['LOW', 'MEDIUM', 'HIGH'], 'Priority must be LOW, MEDIUM or HIGH')
-const status = z.enum(
-  ['NEW', 'CONTACTED', 'QUALIFIED', 'UNQUALIFIED', 'CONVERTED'],
-  'Unknown status',
-)
+const STAGES = [
+  'NEW',
+  'CONTACTED',
+  'QUALIFIED',
+  'PROPOSAL_SENT',
+  'NEGOTIATION',
+  'WON',
+  'LOST',
+] as const
+const status = z.enum(STAGES, 'Unknown status')
 const notes = z.string().trim().max(5000, 'Keep notes under 5000 characters')
 const ownerId = z.string().min(1, 'Choose an owner')
 
@@ -107,8 +113,11 @@ leadsRouter.get('/leads', requirePermission('leads:read'), async (req, res) => {
     ...(status ? { status } : {}),
     ...(priority ? { priority } : {}),
   }
-  const [total, rows] = await Promise.all([
+  // How many leads are in each stage under the search and priority, whatever stage is chosen.
+  const { status: _stage, ...withoutStage } = where
+  const [total, stageGroups, rows] = await Promise.all([
     prisma.lead.count({ where }),
+    prisma.lead.groupBy({ by: ['status'], where: withoutStage, _count: true }),
     prisma.lead.findMany({
       where,
       orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
@@ -117,7 +126,9 @@ leadsRouter.get('/leads', requirePermission('leads:read'), async (req, res) => {
       select: leadSelect,
     }),
   ])
-  res.json({ leads: rows.map(present), total, page, pageSize })
+  const stageCounts = Object.fromEntries(STAGES.map((st) => [st, 0]))
+  for (const g of stageGroups) stageCounts[g.status] = g._count
+  res.json({ leads: rows.map(present), total, page, pageSize, stageCounts })
 })
 
 /** Active users a lead can be given to, for the owner choice on the form. */

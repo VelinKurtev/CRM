@@ -133,8 +133,9 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
   As a Sales user, I want to create a lead with source, value, owner, priority, status and notes, so that potential customers are tracked.
   - [x] Only the title is required; a new lead is New, medium priority and owned by whoever creates it.
 
-- [ ] **US-027 – Lead pipeline stages**
+- [x] **US-027 – Lead pipeline stages**
   As a Sales user, I want leads to move through New Lead → Contacted → Qualified → Proposal Sent → Negotiation → Won/Lost, so that progress is visible.
+  - [x] Move a lead to any stage from the list; the list shows how many leads are in each stage and filters by it.
 
 - [ ] **US-028 – Lead attachments**
   As a Sales user, I want to attach files to a lead, so that related material is kept together.

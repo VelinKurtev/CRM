@@ -37,7 +37,14 @@ export type LeadUpdate = {
   ownerId: string | null
 }
 
-export type LeadsPage = { leads: Lead[]; total: number; page: number; pageSize: number }
+export type LeadsPage = {
+  leads: Lead[]
+  total: number
+  page: number
+  pageSize: number
+  /** Leads in each stage under the current search and priority, whichever stage is chosen. */
+  stageCounts: Record<LeadStatus, number>
+}
 
 export const listLeads = (params: {
   q?: string
@@ -55,6 +62,10 @@ export const createLead = (body: NewLead) =>
 
 export const updateLead = (id: string, body: LeadUpdate) =>
   api.patch<{ lead: Lead }>(`/leads/${id}`, body).then((r) => r.data.lead)
+
+/** Move a lead to another pipeline stage, leaving everything else as it is. */
+export const setLeadStage = (id: string, status: LeadStatus) =>
+  api.patch<{ lead: Lead }>(`/leads/${id}`, { status }).then((r) => r.data.lead)
 
 export const listLeadOwners = () =>
   api.get<{ owners: Person[] }>('/leads/owners').then((r) => r.data.owners)

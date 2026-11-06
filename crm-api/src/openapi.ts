@@ -940,7 +940,7 @@ export const openapi = {
         tags: ['Records'],
         summary: 'List leads',
         description:
-          'Requires `leads:read`. Newest first. `q` matches title or source. Paged (default 20, up to 100).',
+          'Requires `leads:read`. Newest first. Stages run NEW → CONTACTED → QUALIFIED → PROPOSAL_SENT → NEGOTIATION → WON or LOST. `q` matches title or source. Paged (default 20, up to 100).',
         security: [{ bearerAuth: [] }],
         parameters: [
           { name: 'q', in: 'query', schema: { type: 'string' } },
@@ -949,7 +949,15 @@ export const openapi = {
             in: 'query',
             schema: {
               type: 'string',
-              enum: ['NEW', 'CONTACTED', 'QUALIFIED', 'UNQUALIFIED', 'CONVERTED'],
+              enum: [
+                'NEW',
+                'CONTACTED',
+                'QUALIFIED',
+                'PROPOSAL_SENT',
+                'NEGOTIATION',
+                'WON',
+                'LOST',
+              ],
             },
           },
           {
@@ -961,7 +969,10 @@ export const openapi = {
           { name: 'pageSize', in: 'query', schema: { type: 'integer', default: 20, maximum: 100 } },
         ],
         responses: {
-          '200': { description: '`{ leads, total, page, pageSize }`' },
+          '200': {
+            description:
+              '`{ leads, total, page, pageSize, stageCounts }`: `stageCounts` is the number of leads in each stage under the current search and priority',
+          },
           '400': { description: 'Invalid query' },
           '401': { $ref: '#/components/responses/Unauthorized' },
           '403': { $ref: '#/components/responses/Forbidden' },
@@ -1279,7 +1290,7 @@ export const openapi = {
           priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'], default: 'MEDIUM' },
           status: {
             type: 'string',
-            enum: ['NEW', 'CONTACTED', 'QUALIFIED', 'UNQUALIFIED', 'CONVERTED'],
+            enum: ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL_SENT', 'NEGOTIATION', 'WON', 'LOST'],
             default: 'NEW',
           },
           notes: { type: 'string', maxLength: 5000, nullable: true },

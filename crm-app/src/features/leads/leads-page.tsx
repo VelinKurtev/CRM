@@ -1,6 +1,7 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Pencil, Plus, Target } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { toast } from 'sonner'
 
 import { getErrorMessage } from '@/api/client'
 import { Badge } from '@/components/ui/badge'
@@ -20,18 +21,13 @@ import {
 } from '@/components/ui/table'
 import { formatMoney } from '@/features/dashboard/format'
 import { usePermission } from '@/hooks/use-permission'
-import { LEAD_PRIORITIES, LEAD_STATUSES } from '@/services/lead-options'
-import { listLeads } from '@/services/leads'
+import { LEAD_PRIORITIES, LEAD_STATUSES, type LeadStatus } from '@/services/lead-options'
+import { listLeads, setLeadStage, type Lead } from '@/services/leads'
 import { PRIORITY_LABELS, STATUS_LABELS } from './schemas'
 
 const PAGE_SIZE = 20
 
 const FILTERS = [
-  {
-    key: 'status',
-    label: 'Status',
-    options: LEAD_STATUSES.map((s) => ({ value: s, label: STATUS_LABELS[s] })),
-  },
   {
     key: 'priority',
     label: 'Priority',
@@ -110,9 +106,25 @@ export function LeadsPage() {
         <Filters
           filters={FILTERS}
           values={{ status, priority }}
+          extraActive={Boolean(status)}
           onChange={(v) => update({ status: v.status, priority: v.priority, page: undefined })}
         />
       </div>
+
+      <nav aria-label="Pipeline stages" className="flex flex-wrap gap-2">
+        {LEAD_STATUSES.map((s) => (
+          <Button
+            key={s}
+            size="sm"
+            variant={status === s ? 'default' : 'outline'}
+            aria-pressed={status === s}
+            onClick={() => update({ status: status === s ? undefined : s, page: undefined })}
+          >
+            {STATUS_LABELS[s]}
+            <span className="tabular-nums opacity-70">{data?.stageCounts[s] ?? 0}</span>
+          </Button>
+        ))}
+      </nav>
 
       {isError ? (
         <p role="alert" className="text-sm text-destructive">
@@ -159,7 +171,7 @@ export function LeadsPage() {
                 <TableHead>Source</TableHead>
                 <TableHead className="text-right">Value</TableHead>
                 <TableHead>Priority</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Stage</TableHead>
                 <TableHead>Owner</TableHead>
                 {canWrite && (
                   <TableHead>
@@ -181,7 +193,9 @@ export function LeadsPage() {
                       {PRIORITY_LABELS[l.priority]}
                     </Badge>
                   </TableCell>
-                  <TableCell>{STATUS_LABELS[l.status]}</TableCell>
+                  <TableCell>
+                    <StageCell lead={l} canWrite={canWrite} />
+                  </TableCell>
                   <TableCell>
                     {l.owner ? `${l.owner.firstName} ${l.owner.lastName}` : <Dash />}
                   </TableCell>
@@ -207,6 +221,63 @@ export function LeadsPage() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+/** The stage as a progress bar through the pipeline, with a control to move it on or back. */
+function StageCell({ lead, canWrite }: { lead: Lead; canWrite: boolean }) {
+  const queryClient = useQueryClient()
+  const move = useMutation({
+    mutationFn: (stage: LeadStatus) => setLeadStage(lead.id, stage),
+    onSuccess: (updated) => {
+      toast.success(`${updated.title} is now ${STATUS_LABELS[updated.status]}`)
+      void queryClient.invalidateQueries({ queryKey: ['leads'] })
+      void queryClient.invalidateQueries({ queryKey: ['lead', lead.id] })
+      void queryClient.invalidateQueries({
+        predicate: (q) => String(q.queryKey[0]).startsWith('dashboard'),
+      })
+    },
+    onError: (error) => toast.error(getErrorMessage(error, 'Could not move the lead')),
+  })
+
+  // Six steps from New to Won; a lost lead has no progress to show.
+  const steps = LEAD_STATUSES.slice(0, 6)
+  const reached = lead.status === 'LOST' ? -1 : steps.indexOf(lead.status)
+
+  return (
+    <div className="flex min-w-36 flex-col gap-1">
+      {canWrite ? (
+        <select
+          aria-label={`Stage for ${lead.title}`}
+          value={lead.status}
+          disabled={move.isPending}
+          onChange={(e) => move.mutate(e.target.value as LeadStatus)}
+          className="h-8 rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30"
+        >
+          {LEAD_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {STATUS_LABELS[s]}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <span>{STATUS_LABELS[lead.status]}</span>
+      )}
+      <div aria-hidden className="flex gap-0.5">
+        {steps.map((s, i) => (
+          <span
+            key={s}
+            className={`h-1 flex-1 rounded-full ${
+              lead.status === 'LOST'
+                ? 'bg-destructive/40'
+                : i <= reached
+                  ? 'bg-primary'
+                  : 'bg-muted'
+            }`}
+          />
+        ))}
+      </div>
     </div>
   )
 }
