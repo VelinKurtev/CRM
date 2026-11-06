@@ -220,6 +220,7 @@ model Deal {
   amount        Decimal    @default(0) @db.Decimal(14, 2)
   currency      String     @default("USD")
   status        DealStatus @default(OPEN)
+  probability   Int        @default(0) // 0-100, chance of winning
   expectedClose DateTime?
   closedAt      DateTime?
   pipelineId    String

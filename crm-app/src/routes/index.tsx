@@ -5,6 +5,9 @@ import { CompaniesPage } from '@/features/companies/companies-page'
 import { CompanyDetailPage } from '@/features/companies/company-detail-page'
 import { EditCompanyPage } from '@/features/companies/edit-company-page'
 import { NewCompanyPage } from '@/features/companies/new-company-page'
+import { DealsPage } from '@/features/deals/deals-page'
+import { EditDealPage } from '@/features/deals/edit-deal-page'
+import { NewDealPage } from '@/features/deals/new-deal-page'
 import { EditLeadPage } from '@/features/leads/edit-lead-page'
 import { LeadsPage } from '@/features/leads/leads-page'
 import { NewLeadPage } from '@/features/leads/new-lead-page'
@@ -102,6 +105,29 @@ export const routes = [
                         path: ':id/edit',
                         element: <EditCompanyPage />,
                         handle: { crumb: 'Edit company' },
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            element: <RequirePermission permission="deals:read" />,
+            children: [
+              {
+                path: '/deals',
+                handle: { crumb: 'Deals' },
+                children: [
+                  { index: true, element: <DealsPage /> },
+                  {
+                    element: <RequirePermission permission="deals:write" />,
+                    children: [
+                      { path: 'new', element: <NewDealPage />, handle: { crumb: 'New deal' } },
+                      {
+                        path: ':id/edit',
+                        element: <EditDealPage />,
+                        handle: { crumb: 'Edit deal' },
                       },
                     ],
                   },

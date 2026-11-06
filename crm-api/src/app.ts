@@ -16,6 +16,7 @@ import { contactsExportRouter } from './routes/contacts-export.js'
 import { contactsImportRouter } from './routes/contacts-import.js'
 import { contactsRouter } from './routes/contacts.js'
 import { tagsRouter } from './routes/tags.js'
+import { dealsRouter } from './routes/deals.js'
 import { leadAttachmentsRouter } from './routes/lead-attachments.js'
 import { leadsRouter } from './routes/leads.js'
 import { notesRouter } from './routes/notes.js'
@@ -64,6 +65,7 @@ app.use('/api', contactsExportRouter)
 app.use('/api', contactsImportRouter)
 app.use('/api', contactsRouter)
 app.use('/api', companiesRouter)
+app.use('/api', dealsRouter)
 app.use('/api', leadsRouter)
 app.use('/api', leadAttachmentsRouter)
 app.use('/api', tagsRouter)

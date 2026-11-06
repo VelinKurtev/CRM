@@ -21,6 +21,7 @@ A customer relationship manager: contacts, companies, leads, deals, tasks and re
 - Contacts: create, edit, delete, search, import and export: [[Contacts]]
 - Companies: create, edit, search: [[Companies]]
 - Leads: create, edit, search, filter: [[Leads]]
+- Deals: create, edit, search, filter: [[Deals]]
 - Notes on contacts, companies and deals: [[Notes]]
 - Running it safely: [[Security and Operations]]
 - Every endpoint: [[API Reference]]

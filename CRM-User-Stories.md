@@ -146,8 +146,10 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
   - [x] Only managers and admins choose or change a lead's owner; Sales own the leads they create.
   - [x] Reassign from the Leads list or the lead's Edit page; every change is recorded in the audit log.
 
-- [ ] **US-030 – Create and edit deal**
+- [x] **US-030 – Create and edit deal**
   As a Sales user, I want to create a deal with name, customer, value, stage, expected closing date and probability, so that sales opportunities are tracked.
+  - [x] Only the name is required; the probability starts from the chosen stage's and can be changed.
+  - [x] Moving a deal to a won or lost stage closes it (probability 100 or 0); moving it back reopens it.
 
 - [ ] **US-031 – Deal Kanban board**
   As a Sales user, I want a Kanban board with drag-and-drop between stages, so that I can update deals quickly.

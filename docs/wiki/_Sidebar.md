@@ -5,6 +5,7 @@
 - [[Contacts]]
 - [[Companies]]
 - [[Leads]]
+- [[Deals]]
 - [[Notes]]
 - [[Dashboard]]
 - [[Roles and Permissions]]

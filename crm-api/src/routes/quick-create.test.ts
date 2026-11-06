@@ -76,8 +76,12 @@ describe('quick-create endpoints', () => {
       expectedClose: '2027-01-31',
     })
     expect(res.status).toBe(201)
-    expect(res.body.deal).toMatchObject({ status: 'OPEN', amount: 1500.5, ownerId: ids.sales })
-    const stage = await prisma.stage.findUniqueOrThrow({ where: { id: res.body.deal.stageId } })
+    expect(res.body.deal).toMatchObject({
+      status: 'OPEN',
+      amount: 1500.5,
+      owner: { id: ids.sales },
+    })
+    const stage = await prisma.stage.findUniqueOrThrow({ where: { id: res.body.deal.stage.id } })
     expect(stage.pipelineId).toBe(res.body.deal.pipelineId)
     const first = await prisma.stage.findFirstOrThrow({
       where: { pipelineId: stage.pipelineId },

@@ -129,6 +129,15 @@ Sample files to try it with, which the API tests also use, are in `crm-api/src/t
 | `empty.txt` | Refused: the file is empty |
 | `oversized.bin` | Refused: over 10 MB. Not kept in git; create it with `node crm-api/src/test/fixtures/attachments/make-oversized.mjs` |
 
+## Deals
+
+**Deals** in the sidebar lists sales opportunities, newest first (search by deal or company name, filter by open,
+won or lost). Sales users and above can add and edit them: name (required), company and contact (found by searching),
+value in USD, stage, expected closing date and probability of winning. A new deal starts in the first stage of the
+default pipeline, with that stage's probability; change the stage and the probability follows, and you can still
+override it. Moving a deal to a *won* or *lost* stage closes it (probability 100% or 0%), and moving it back reopens it.
+The deal board with drag-and-drop comes with the next stories.
+
 ## Wiki
 
 The project wiki is written in `docs/wiki/` (reviewed with the code). A workflow (`.github/workflows/wiki.yml`)

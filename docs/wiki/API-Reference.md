@@ -54,6 +54,11 @@ Swagger UI at **http://localhost:4000/api/docs**; the raw spec is at `/api/opena
 | `GET /companies/{id}/overview` | `companies:read` | The company with its contacts, deals and notes (first 50 of each; a section you may not read is `null`) |
 | `POST /companies` | `companies:write` | Create (only `name` required; names unique ignoring case) |
 | `PATCH /companies/{id}` | `companies:write` | Update (only what you send; `null` clears an optional field) |
+| `GET /pipelines` | `deals:read` | Pipelines with their stages in order, default first |
+| `GET /deals` | `deals:read` | Deals newest first (search `q` on name or company, filter `status`, paging) |
+| `GET /deals/{id}` | `deals:read` | One deal |
+| `POST /deals` | `deals:write` | Create (only `title` required; starts in the default pipeline's first stage unless `stageId` is given) |
+| `PATCH /deals/{id}` | `deals:write` | Update (only what you send; `null` clears the date, company or contact; a stage change reopens or closes the deal) |
 | `GET /leads` | `leads:read` | Leads newest first (search `q`, filter `status`, `priority`, paging) with the number of leads in each stage |
 | `GET /leads/{id}` | `leads:read` | One lead |
 | `GET /leads/owners` | `leads:assign` | Active users a lead can be given to |

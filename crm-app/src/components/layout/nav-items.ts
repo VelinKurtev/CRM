@@ -1,5 +1,6 @@
 import {
   Building2,
+  Handshake,
   LayoutDashboard,
   ShieldCheck,
   Tag,
@@ -22,6 +23,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Contacts', to: '/contacts', icon: Users, permission: 'contacts:read' },
   { label: 'Companies', to: '/companies', icon: Building2, permission: 'companies:read' },
+  { label: 'Deals', to: '/deals', icon: Handshake, permission: 'deals:read' },
   { label: 'Leads', to: '/leads', icon: Target, permission: 'leads:read' },
   { label: 'Tags', to: '/tags', icon: Tag, permission: 'tags:manage' },
   { label: 'My profile', to: '/profile', icon: UserRound },

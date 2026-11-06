@@ -1,7 +1,6 @@
 import { Router } from 'express'
 import { z } from 'zod'
 
-import { ensureFirstDealStage } from '../lib/default-pipeline.js'
 import { prisma } from '../lib/prisma.js'
 import { requirePermission } from '../middleware/authorize.js'
 import { validateBody } from '../middleware/validate.js'
@@ -15,32 +14,6 @@ export const quickCreateRouter = Router()
 const text = (label: string, max = 200) => z.string().trim().min(1, `${label} is required`).max(max)
 /** A calendar date from a date input; tasks are due at the end of that day. */
 const endOfDay = (d: string) => new Date(`${d}T23:59:59.999Z`)
-
-const dealSchema = z.object({
-  title: text('Title'),
-  amount: z.number().min(0, 'Amount cannot be negative').max(999_999_999_999).optional(),
-  expectedClose: z.iso.date('Enter a valid date').optional(),
-})
-
-quickCreateRouter.post(
-  '/deals',
-  requirePermission('deals:write'),
-  validateBody(dealSchema),
-  async (req, res) => {
-    const { expectedClose, ...data } = req.body as z.infer<typeof dealSchema>
-    const stage = await ensureFirstDealStage(prisma)
-    const deal = await prisma.deal.create({
-      data: {
-        ...data,
-        expectedClose: expectedClose ? endOfDay(expectedClose) : undefined,
-        pipelineId: stage.pipelineId,
-        stageId: stage.id,
-        ownerId: req.auth!.userId,
-      },
-    })
-    res.status(201).json({ deal: { ...deal, amount: Number(deal.amount) } })
-  },
-)
 
 const taskSchema = z.object({
   title: text('Title'),

@@ -1108,29 +1108,103 @@ export const openapi = {
     '/deals': {
       post: {
         tags: ['Records'],
-        summary: 'Create deal',
+        summary: 'Create a deal',
         description:
-          'Quick-create with the essential fields only. Requires `deals:write`. The deal starts in the first stage of the default pipeline (created on first use if none exists).',
+          'Requires `deals:write`. Only `title` (the name) is required. Without `stageId` the deal starts in the first stage of the default pipeline (created on first use if none exists). `probability` defaults to the stage’s; a deal created in a won or lost stage is closed at once, with probability 100 or 0. `companyId` and `contactId` say who the deal is for. `expectedClose` is a calendar date. The caller becomes the owner.',
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
           content: {
             'application/json': {
-              schema: {
-                type: 'object',
-                required: ['title'],
-                properties: {
-                  title: { type: 'string' },
-                  amount: { type: 'number', minimum: 0 },
-                  expectedClose: { type: 'string', format: 'date' },
-                },
+              schema: { $ref: '#/components/schemas/DealInput' },
+              example: {
+                title: 'Website redesign',
+                amount: 15000,
+                probability: 60,
+                expectedClose: '2027-03-31',
+                companyId: 'clx…',
               },
             },
           },
         },
         responses: {
-          '201': { description: 'Created' },
-          '400': { description: 'Validation failed' },
+          '201': { description: '`{ deal }`' },
+          '400': {
+            description: 'Validation failed, or the stage, company or contact does not exist',
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+      get: {
+        tags: ['Records'],
+        summary: 'List deals',
+        description:
+          'Requires `deals:read`. Newest first. `q` matches the deal’s name or its company’s name. Paged (default 20, up to 100).',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'q', in: 'query', schema: { type: 'string' } },
+          {
+            name: 'status',
+            in: 'query',
+            schema: { type: 'string', enum: ['OPEN', 'WON', 'LOST'] },
+          },
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'pageSize', in: 'query', schema: { type: 'integer', default: 20, maximum: 100 } },
+        ],
+        responses: {
+          '200': { description: '`{ deals, total, page, pageSize }`' },
+          '400': { description: 'Invalid query' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/deals/{id}': {
+      get: {
+        tags: ['Records'],
+        summary: 'Get a deal',
+        description: 'Requires `deals:read`.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': { description: '`{ deal }`' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Deal not found' },
+        },
+      },
+      patch: {
+        tags: ['Records'],
+        summary: 'Edit a deal',
+        description:
+          'Requires `deals:write`. Send only what changes: a field left out is kept, `null` clears `expectedClose`, `companyId` or `contactId`. The stage must be one of the deal’s own pipeline. Moving to another stage sets the status (open, won or lost) and closing time, and gives the deal that stage’s probability unless one is sent; a closed deal’s probability is fixed at 100 (won) or 0 (lost).',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/DealInput' } } },
+        },
+        responses: {
+          '200': { description: '`{ deal }`' },
+          '400': {
+            description: 'Validation failed, or the stage, company or contact is not valid',
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Deal not found' },
+        },
+      },
+    },
+    '/pipelines': {
+      get: {
+        tags: ['Records'],
+        summary: 'List pipelines and their stages',
+        description:
+          'Requires `deals:read`. The default pipeline first, each with its stages in order (`id`, `name`, `position`, `probability`, `isWon`, `isLost`). A database with no pipeline gets the standard one.',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: '`{ pipelines }`' },
           '401': { $ref: '#/components/responses/Unauthorized' },
           '403': { $ref: '#/components/responses/Forbidden' },
         },
@@ -1353,6 +1427,19 @@ export const openapi = {
       },
     },
     schemas: {
+      DealInput: {
+        type: 'object',
+        required: ['title'],
+        properties: {
+          title: { type: 'string', maxLength: 200 },
+          amount: { type: 'number', minimum: 0, description: 'The deal’s value, 2 decimals' },
+          stageId: { type: 'string' },
+          probability: { type: 'integer', minimum: 0, maximum: 100 },
+          expectedClose: { type: 'string', format: 'date', nullable: true },
+          companyId: { type: 'string', nullable: true },
+          contactId: { type: 'string', nullable: true },
+        },
+      },
       LeadInput: {
         type: 'object',
         required: ['title'],
