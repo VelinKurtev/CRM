@@ -32,6 +32,24 @@ There are no rules about the order: a lead can skip ahead, step back or be reope
 
 Leads created before the pipeline existed were mapped over: *Unqualified* became **Lost** and *Converted* became **Won**.
 
+## Attachments
+
+Keep related material with the lead. On a lead's **Edit** page, under the form, **Attachments** lists its files
+(name, size, who added it and when). People who can write leads can:
+
+- **Add files**: pick one or several. Each can be up to **10 MB**, and a lead can have up to **25** files. A file that
+  is empty, too big or refused is listed with the reason while the others still go through.
+- **Download** a file, which saves it under its own name.
+- **Remove** a file, after a confirmation. Removal cannot be undone.
+
+The Leads list shows a paperclip and the number of files next to any lead that has some. Files are kept in the
+database (not on disk), so they are backed up with everything else and are deleted with their lead. Adding and
+removing files is written to the audit log.
+
+Downloads are always saved as files, never opened inside the page, whatever their type, so an uploaded web page or
+script cannot run in the CRM. The API lets anyone with `leads:read` list and download files; the Edit page is where
+the files are managed.
+
 ## Not here yet
 
-Attachments, reassignment by managers and converting a lead to a deal come with their own stories.
+Reassignment by managers and converting a lead to a deal come with their own stories.

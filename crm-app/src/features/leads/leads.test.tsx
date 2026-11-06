@@ -31,6 +31,7 @@ const hot: leads.Lead = {
   notes: 'Wants a demo',
   createdAt: '2026-11-01T10:00:00.000Z',
   owner: { id: '2', firstName: 'Bob', lastName: 'Ray' },
+  attachmentCount: 2,
 }
 const bare: leads.Lead = {
   ...hot,
@@ -42,6 +43,7 @@ const bare: leads.Lead = {
   status: 'NEW',
   notes: null,
   owner: null,
+  attachmentCount: 0,
 }
 
 function renderAt(url: string, permissions = sales.permissions) {
@@ -99,6 +101,7 @@ describe('Leads list', () => {
     expect(within(row).getByText('High')).toBeInTheDocument()
     expect(within(row).getByLabelText('Stage for Website redesign')).toHaveValue('CONTACTED')
     expect(within(row).getByText('Bob Ray')).toBeInTheDocument()
+    expect(within(row).getByText('files attached')).toBeInTheDocument()
     const blank = screen.getByText('Cold enquiry').closest('tr')!
     expect(within(blank).getAllByText('None')).toHaveLength(3)
     expect(screen.getByText('2 leads')).toBeInTheDocument()

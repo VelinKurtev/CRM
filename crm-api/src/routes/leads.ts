@@ -65,16 +65,18 @@ const leadSelect = {
   createdAt: true,
   updatedAt: true,
   owner: { select: { id: true, firstName: true, lastName: true } },
+  _count: { select: { attachments: true } },
 } as const
 
 type Row = Awaited<ReturnType<typeof findOne>>
 
 const findOne = (id: string) => prisma.lead.findUnique({ where: { id }, select: leadSelect })
 
-/** API shape: value as a plain number. */
-const present = ({ value, ...lead }: NonNullable<Row>) => ({
+/** API shape: value as a plain number, the attachment count flattened. */
+const present = ({ value, _count, ...lead }: NonNullable<Row>) => ({
   ...lead,
   value: value === null ? null : Number(value),
+  attachmentCount: _count.attachments,
 })
 
 /** A lead's owner must be an active user. */

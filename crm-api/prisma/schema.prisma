@@ -51,6 +51,7 @@ model User {
   ownedCompanies      Company[]            @relation("CompanyOwner")
   ownedContacts       Contact[]            @relation("ContactOwner")
   ownedLeads          Lead[]               @relation("LeadOwner")
+  leadAttachments     LeadAttachment[]
   ownedDeals          Deal[]               @relation("DealOwner")
   activities          Activity[]
   assignedTasks       Task[]               @relation("TaskAssignee")
@@ -158,9 +159,27 @@ model Lead {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
-  tags TagOnLead[]
+  tags        TagOnLead[]
+  attachments LeadAttachment[]
 
   @@index([status])
+}
+
+/// A file attached to a lead. The bytes live in the database, so they are backed up with the data
+/// and go when the lead goes.
+model LeadAttachment {
+  id           String   @id @default(cuid())
+  leadId       String
+  lead         Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  name         String
+  mimeType     String
+  sizeBytes    Int
+  data         Bytes
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@index([leadId])
 }
 
 model Pipeline {

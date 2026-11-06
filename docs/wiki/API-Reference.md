@@ -59,6 +59,10 @@ Swagger UI at **http://localhost:4000/api/docs**; the raw spec is at `/api/opena
 | `GET /leads/owners` | `leads:write` | Active users a lead can be given to |
 | `POST /leads` | `leads:write` | Create (only `title` required; owner defaults to the caller) |
 | `PATCH /leads/{id}` | `leads:write` | Update (only what you send; `null` clears an optional field) |
+| `GET /leads/{id}/attachments` | `leads:read` | The lead's files (without their contents) |
+| `POST /leads/{id}/attachments` | `leads:write` | Attach a file: body is the file as `application/octet-stream`, `?name=` and `?type=`; 10 MB, 25 per lead |
+| `GET /leads/{id}/attachments/{attachmentId}` | `leads:read` | Download a file |
+| `DELETE /leads/{id}/attachments/{attachmentId}` | `leads:write` | Remove a file |
 | `POST /notes` | `notes:write` | Add a note to a contact, company or deal (exactly one of `contactId`, `companyId`, `dealId`) |
 | `PATCH /notes/{id}` | `notes:write` | Edit a note (author only) |
 | `DELETE /notes/{id}` | `notes:delete`, or your own | Delete a note |

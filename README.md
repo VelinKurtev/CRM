@@ -115,6 +115,19 @@ priority). Sales users and above can add and edit them: title (required), source
 (low, medium, high), status, owner and notes. A new lead is *New*, *Medium* priority and owned by whoever creates it;
 the owner can be any active user.
 
+Open a lead's **Edit** page to keep related files with it: add proposals, quotes or anything else (up to 10 MB each,
+25 per lead), download them later, or remove them. Files are stored in the database, so they are backed up with the
+rest of the data. The Leads list shows a paperclip with the number of files on each lead.
+
+Sample files to try it with, which the API tests also use, are in `crm-api/src/test/fixtures/attachments/`:
+
+| File | What it shows |
+| --- | --- |
+| `quote.pdf`, `logo.png`, `meeting-notes.txt`, `pricing.csv` | Ordinary files that upload and download unchanged (the notes include Cyrillic text) |
+| `résumé "v2" (final).html` | An awkward name and a script inside: it saves under its own name and never runs in the page |
+| `empty.txt` | Refused: the file is empty |
+| `oversized.bin` | Refused: over 10 MB. Not kept in git; create it with `node crm-api/src/test/fixtures/attachments/make-oversized.mjs` |
+
 ## Wiki
 
 The project wiki is written in `docs/wiki/` (reviewed with the code). A workflow (`.github/workflows/wiki.yml`)

@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Plus, Target } from 'lucide-react'
+import { Paperclip, Pencil, Plus, Target } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
@@ -183,7 +183,21 @@ export function LeadsPage() {
             <TableBody>
               {data.leads.map((l) => (
                 <TableRow key={l.id}>
-                  <TableCell className="font-medium">{l.title}</TableCell>
+                  <TableCell className="font-medium">
+                    {l.title}
+                    {l.attachmentCount > 0 && (
+                      <span
+                        className="ml-2 inline-flex items-center gap-0.5 text-xs font-normal text-muted-foreground"
+                        title={`${l.attachmentCount} attached`}
+                      >
+                        <Paperclip className="size-3" aria-hidden />
+                        {l.attachmentCount}
+                        <span className="sr-only">
+                          {l.attachmentCount === 1 ? 'file attached' : 'files attached'}
+                        </span>
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell>{l.source ?? <Dash />}</TableCell>
                   <TableCell className="text-right">
                     {l.value === null ? <Dash /> : formatMoney(l.value)}

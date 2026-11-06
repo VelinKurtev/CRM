@@ -137,8 +137,9 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
   As a Sales user, I want leads to move through New Lead → Contacted → Qualified → Proposal Sent → Negotiation → Won/Lost, so that progress is visible.
   - [x] Move a lead to any stage from the list; the list shows how many leads are in each stage and filters by it.
 
-- [ ] **US-028 – Lead attachments**
+- [x] **US-028 – Lead attachments**
   As a Sales user, I want to attach files to a lead, so that related material is kept together.
+  - [x] Add several files at once (up to 10 MB each, 25 per lead), download them and remove them.
 
 - [ ] **US-029 – Lead assignment**
   As a Manager, I want to assign or reassign a lead owner, so that work is distributed.

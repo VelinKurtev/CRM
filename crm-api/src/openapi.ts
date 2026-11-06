@@ -993,6 +993,84 @@ export const openapi = {
         },
       },
     },
+    '/leads/{id}/attachments': {
+      get: {
+        tags: ['Records'],
+        summary: 'List a lead’s files',
+        description:
+          'Requires `leads:read`. Oldest first, without the file contents: `{ attachments: [{ id, name, mimeType, sizeBytes, createdAt, uploadedBy }] }`.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': { description: '`{ attachments }`' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Lead not found' },
+        },
+      },
+      post: {
+        tags: ['Records'],
+        summary: 'Attach a file to a lead',
+        description:
+          'Requires `leads:write`. The request body is the file itself, sent as `Content-Type: application/octet-stream`; `name` is required and `type` is the file’s real media type (default `application/octet-stream`). Up to 10 MB per file (413 above that) and 25 files per lead (409).',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'name', in: 'query', required: true, schema: { type: 'string', maxLength: 200 } },
+          { name: 'type', in: 'query', schema: { type: 'string', example: 'application/pdf' } },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/octet-stream': { schema: { type: 'string', format: 'binary' } },
+          },
+        },
+        responses: {
+          '201': { description: '`{ attachment }`' },
+          '400': { description: 'No name, or an empty or missing file' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Lead not found' },
+          '409': { description: 'The lead already has 25 files' },
+          '413': { description: 'The file is over 10 MB' },
+        },
+      },
+    },
+    '/leads/{id}/attachments/{attachmentId}': {
+      get: {
+        tags: ['Records'],
+        summary: 'Download a lead’s file',
+        description:
+          'Requires `leads:read`. Always served as a download (`Content-Disposition: attachment`) with a sandboxing `Content-Security-Policy`.',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'attachmentId', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        responses: {
+          '200': { description: 'The file' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Attachment not found' },
+        },
+      },
+      delete: {
+        tags: ['Records'],
+        summary: 'Remove a lead’s file',
+        description: 'Requires `leads:write`.',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'attachmentId', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        responses: {
+          '204': { description: 'Removed' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Attachment not found' },
+        },
+      },
+    },
     '/leads/{id}': {
       get: {
         tags: ['Records'],

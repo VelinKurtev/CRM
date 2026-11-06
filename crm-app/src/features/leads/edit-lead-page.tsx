@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getLead, updateLead } from '@/services/leads'
+import { LeadAttachments } from './lead-attachments'
 import { LeadForm } from './lead-form'
 import { fromLead, toLeadUpdate } from './schemas'
 
@@ -64,6 +65,7 @@ export function EditLeadPage() {
         }}
         onCancel={() => navigate(-1)}
       />
+      <LeadAttachments leadId={id} />
     </div>
   )
 }
