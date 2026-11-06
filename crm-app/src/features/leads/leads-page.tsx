@@ -22,7 +22,7 @@ import {
 import { formatMoney } from '@/features/dashboard/format'
 import { usePermission } from '@/hooks/use-permission'
 import { LEAD_PRIORITIES, LEAD_STATUSES, type LeadStatus } from '@/services/lead-options'
-import { listLeads, setLeadStage, type Lead } from '@/services/leads'
+import { listLeadOwners, listLeads, setLeadOwner, setLeadStage, type Lead } from '@/services/leads'
 import { PRIORITY_LABELS, STATUS_LABELS } from './schemas'
 
 const PAGE_SIZE = 20
@@ -40,6 +40,7 @@ const priorityVariant = { HIGH: 'destructive', MEDIUM: 'secondary', LOW: 'outlin
 export function LeadsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const canWrite = usePermission('leads:write')
+  const canAssign = usePermission('leads:assign')
   const q = searchParams.get('q') ?? ''
   const status = searchParams.get('status') ?? ''
   const priority = searchParams.get('priority') ?? ''
@@ -211,7 +212,13 @@ export function LeadsPage() {
                     <StageCell lead={l} canWrite={canWrite} />
                   </TableCell>
                   <TableCell>
-                    {l.owner ? `${l.owner.firstName} ${l.owner.lastName}` : <Dash />}
+                    {canAssign ? (
+                      <OwnerCell lead={l} />
+                    ) : l.owner ? (
+                      `${l.owner.firstName} ${l.owner.lastName}`
+                    ) : (
+                      <Dash />
+                    )}
                   </TableCell>
                   {canWrite && (
                     <TableCell className="text-right">
@@ -293,6 +300,51 @@ function StageCell({ lead, canWrite }: { lead: Lead; canWrite: boolean }) {
         ))}
       </div>
     </div>
+  )
+}
+
+/** For managers: give the lead to someone else, or to nobody, straight from the list. */
+function OwnerCell({ lead }: { lead: Lead }) {
+  const queryClient = useQueryClient()
+  // Shared by every row, so the list is fetched once.
+  const owners = useQuery({ queryKey: ['lead-owners'], queryFn: listLeadOwners })
+  const assign = useMutation({
+    mutationFn: (ownerId: string | null) => setLeadOwner(lead.id, ownerId),
+    onSuccess: (updated) => {
+      toast.success(
+        updated.owner
+          ? `${updated.title} is now ${updated.owner.firstName} ${updated.owner.lastName}’s`
+          : `${updated.title} has no owner`,
+      )
+      void queryClient.invalidateQueries({ queryKey: ['leads'] })
+      void queryClient.invalidateQueries({ queryKey: ['lead', lead.id] })
+    },
+    onError: (error) => toast.error(getErrorMessage(error, 'Could not assign the lead')),
+  })
+
+  const current = lead.owner
+  const listed = owners.data ?? []
+  return (
+    <select
+      aria-label={`Owner of ${lead.title}`}
+      value={current?.id ?? ''}
+      disabled={assign.isPending || !owners.data}
+      onChange={(e) => assign.mutate(e.target.value || null)}
+      className="h-8 max-w-44 rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30"
+    >
+      <option value="">Nobody</option>
+      {listed.map((o) => (
+        <option key={o.id} value={o.id}>
+          {o.firstName} {o.lastName}
+        </option>
+      ))}
+      {/* A deactivated owner is no longer on the list but is still who owns it. */}
+      {current && !listed.some((o) => o.id === current.id) && (
+        <option value={current.id}>
+          {current.firstName} {current.lastName} (inactive)
+        </option>
+      )}
+    </select>
   )
 }
 

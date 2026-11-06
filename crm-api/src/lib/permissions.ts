@@ -21,6 +21,7 @@ export const PERMISSIONS = [
   'contacts:delete_own', // delete contacts you own (contacts:delete covers anyone's)
   'contacts:export', // download contacts as a file
   'tags:manage', // rename, recolor and delete tags
+  'leads:assign', // give a lead to someone, or take it from them
   'reports:read',
   'users:read', // see the team list
   'users:manage', // assign roles, manage accounts
@@ -41,6 +42,7 @@ export const ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     ...all(CRM_ENTITIES, ['read', 'write', 'delete']),
     'contacts:export',
     'tags:manage',
+    'leads:assign',
     'reports:read',
     'users:read',
   ],

@@ -38,6 +38,10 @@ describe('role permission matrix', () => {
     expect(ROLE_PERMISSIONS.MANAGER).toContain('tags:manage')
     expect(ROLE_PERMISSIONS.SALES).not.toContain('tags:manage')
     expect(ROLE_PERMISSIONS.SUPPORT).not.toContain('tags:manage')
+    // Handing leads out is a manager's job; sales work the leads they are given.
+    expect(ROLE_PERMISSIONS.MANAGER).toContain('leads:assign')
+    expect(ROLE_PERMISSIONS.SALES).not.toContain('leads:assign')
+    expect(ROLE_PERMISSIONS.SUPPORT).not.toContain('leads:assign')
     expect(ROLE_PERMISSIONS.SUPPORT).not.toContain('deals:write')
     expect(ROLE_PERMISSIONS.SUPPORT).not.toContain('leads:read')
   })

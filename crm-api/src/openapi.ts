@@ -912,7 +912,7 @@ export const openapi = {
         tags: ['Records'],
         summary: 'Create a lead',
         description:
-          'Requires `leads:write`. Only `title` is required. A new lead is `NEW` with `MEDIUM` priority and is owned by the caller unless `ownerId` names another active user. `value` is the estimated worth, up to two decimals.',
+          'Requires `leads:write`. Only `title` is required. A new lead is `NEW` with `MEDIUM` priority and is owned by the caller. Naming another active user as `ownerId` needs `leads:assign` (403 otherwise). `value` is the estimated worth, up to two decimals.',
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
@@ -984,7 +984,7 @@ export const openapi = {
         tags: ['Records'],
         summary: 'Users a lead can be assigned to',
         description:
-          'Requires `leads:write`. Active users, by name: `{ owners: [{ id, firstName, lastName }] }`.',
+          'Requires `leads:assign`. Active users, by name: `{ owners: [{ id, firstName, lastName }] }`.',
         security: [{ bearerAuth: [] }],
         responses: {
           '200': { description: '`{ owners }`' },
@@ -1089,7 +1089,7 @@ export const openapi = {
         tags: ['Records'],
         summary: 'Edit a lead',
         description:
-          'Requires `leads:write`. Send only what changes: a field left out is kept, `null` clears `source`, `value`, `notes` or `ownerId`. The title cannot be cleared. `ownerId` must be an active user.',
+          'Requires `leads:write`. Send only what changes: a field left out is kept, `null` clears `source`, `value`, `notes` or `ownerId`. The title cannot be cleared. Changing `ownerId` (to another user, or `null` for nobody) needs `leads:assign` (403 otherwise) and the new owner must be an active user; sending the current owner changes nothing. Each reassignment is written to the audit log.',
         security: [{ bearerAuth: [] }],
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         requestBody: {

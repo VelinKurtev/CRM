@@ -8,6 +8,7 @@ import { getErrorMessage } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
+import { usePermission } from '@/hooks/use-permission'
 import { getLead, updateLead } from '@/services/leads'
 import { LeadAttachments } from './lead-attachments'
 import { LeadForm } from './lead-form'
@@ -17,6 +18,7 @@ export function EditLeadPage() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const canAssign = usePermission('leads:assign')
   const { data, isPending, isError, error } = useQuery({
     queryKey: ['lead', id],
     queryFn: () => getLead(id),
@@ -53,7 +55,7 @@ export function EditLeadPage() {
         defaultValues={fromLead(data)}
         submitLabel="Save changes"
         noOwnerLabel="Nobody"
-        save={(values) => updateLead(id, toLeadUpdate(values))}
+        save={(values) => updateLead(id, toLeadUpdate(values, canAssign))}
         onSaved={(lead) => {
           toast.success(`${lead.title} was updated`)
           void queryClient.invalidateQueries({ queryKey: ['lead', id] })

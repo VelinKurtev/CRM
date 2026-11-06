@@ -46,6 +46,9 @@ const bare: leads.Lead = {
   attachmentCount: 0,
 }
 
+/** A manager: everything sales can do, and may give leads to other people. */
+const manager = [...sales.permissions, 'leads:assign']
+
 function renderAt(url: string, permissions = sales.permissions) {
   useAuthStore.setState({ token: 'jwt', user: { ...sales, permissions }, initialized: true })
   const router = createMemoryRouter(routes, { initialEntries: [url] })
@@ -171,6 +174,39 @@ describe('Leads list', () => {
     await waitFor(() => expect(leads.listLeads).toHaveBeenCalledTimes(2))
   })
 
+  it('lets a manager give a lead to someone else from the list', async () => {
+    vi.mocked(leads.setLeadOwner).mockResolvedValue({
+      ...hot,
+      owner: { id: '1', firstName: 'Ann', lastName: 'Lee' },
+    })
+    renderAt('/leads', manager)
+    await screen.findByText('Website redesign')
+    const owner = await screen.findByLabelText('Owner of Website redesign')
+    await waitFor(() => expect(owner).toBeEnabled())
+    expect(owner).toHaveDisplayValue('Bob Ray')
+    expect(screen.getByLabelText('Owner of Cold enquiry')).toHaveDisplayValue('Nobody')
+    await userEvent.selectOptions(owner, '1')
+    await waitFor(() => expect(leads.setLeadOwner).toHaveBeenCalledWith('l1', '1'))
+    await waitFor(() => expect(leads.listLeads).toHaveBeenCalledTimes(2))
+  })
+
+  it('lets a manager take a lead off its owner', async () => {
+    vi.mocked(leads.setLeadOwner).mockResolvedValue({ ...hot, owner: null })
+    renderAt('/leads', manager)
+    const owner = await screen.findByLabelText('Owner of Website redesign')
+    await waitFor(() => expect(owner).toBeEnabled())
+    await userEvent.selectOptions(owner, '')
+    await waitFor(() => expect(leads.setLeadOwner).toHaveBeenCalledWith('l1', null))
+  })
+
+  it('shows the owner as plain text to people who cannot assign, without fetching owners', async () => {
+    renderAt('/leads')
+    const row = (await screen.findByText('Website redesign')).closest('tr')!
+    expect(within(row).getByText('Bob Ray')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/Owner of/)).not.toBeInTheDocument()
+    expect(leads.listLeadOwners).not.toHaveBeenCalled()
+  })
+
   it('only shows the stage, without a control, to read-only roles', async () => {
     renderAt('/leads', ['leads:read'])
     const row = (await screen.findByText('Website redesign')).closest('tr')!
@@ -226,7 +262,7 @@ describe('New lead', () => {
 
   it('creates a lead with every field, sending the value as a number', async () => {
     vi.mocked(leads.createLead).mockResolvedValue(hot)
-    const router = renderAt('/leads/new')
+    const router = renderAt('/leads/new', manager)
     await userEvent.type(screen.getByLabelText('Title'), '  Website redesign ')
     await userEvent.type(screen.getByLabelText('Source (optional)'), 'Trade show')
     await userEvent.type(screen.getByLabelText('Estimated value in USD (optional)'), '15000.50')
@@ -251,9 +287,20 @@ describe('New lead', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/leads'))
   })
 
-  it('needs only a title: medium priority, new, owned by me', async () => {
+  it('has no owner choice for sales: a new lead is theirs', async () => {
     vi.mocked(leads.createLead).mockResolvedValue(bare)
     renderAt('/leads/new')
+    await userEvent.type(screen.getByLabelText('Title'), 'Cold enquiry')
+    expect(screen.queryByLabelText('Owner')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Create lead' }))
+    await waitFor(() => expect(leads.createLead).toHaveBeenCalled())
+    expect(vi.mocked(leads.createLead).mock.lastCall![0]).not.toHaveProperty('ownerId')
+    expect(leads.listLeadOwners).not.toHaveBeenCalled()
+  })
+
+  it('needs only a title: medium priority, new, owned by me', async () => {
+    vi.mocked(leads.createLead).mockResolvedValue(bare)
+    renderAt('/leads/new', manager)
     expect(screen.getByLabelText('Owner')).toHaveDisplayValue('Me')
     await userEvent.click(screen.getByRole('button', { name: 'Create lead' }))
     expect(await screen.findByText('Title is required')).toBeInTheDocument()
@@ -285,7 +332,7 @@ describe('New lead', () => {
         ownerId: 'Choose an active user as owner',
       }),
     )
-    const router = renderAt('/leads/new')
+    const router = renderAt('/leads/new', manager)
     await userEvent.type(screen.getByLabelText('Title'), 'Lead')
     await userEvent.click(screen.getByRole('button', { name: 'Create lead' }))
     expect(await screen.findByText('Choose an active user as owner')).toBeInTheDocument()
@@ -305,7 +352,7 @@ describe('Edit lead', () => {
   it('fills the form and saves changes, clearing emptied fields with null', async () => {
     vi.mocked(leads.getLead).mockResolvedValue(hot)
     vi.mocked(leads.updateLead).mockResolvedValue({ ...hot, title: 'Redesign' })
-    const router = renderAt('/leads/l1/edit')
+    const router = renderAt('/leads/l1/edit', manager)
 
     const title = await screen.findByLabelText('Title')
     expect(title).toHaveValue('Website redesign')
@@ -334,6 +381,37 @@ describe('Edit lead', () => {
       }),
     )
     await waitFor(() => expect(router.state.location.pathname).toBe('/leads'))
+  })
+
+  it('leaves the owner alone when sales edit a lead', async () => {
+    vi.mocked(leads.getLead).mockResolvedValue(hot)
+    vi.mocked(leads.updateLead).mockResolvedValue(hot)
+    renderAt('/leads/l1/edit')
+    await screen.findByLabelText('Title')
+    expect(screen.queryByLabelText('Owner')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+    await waitFor(() => expect(leads.updateLead).toHaveBeenCalled())
+    expect(vi.mocked(leads.updateLead).mock.lastCall![1]).not.toHaveProperty('ownerId')
+  })
+
+  it('can set the owner to nobody, and still shows an owner who was deactivated', async () => {
+    vi.mocked(leads.getLead).mockResolvedValue({
+      ...hot,
+      owner: { id: '9', firstName: 'Gone', lastName: 'User' },
+    })
+    vi.mocked(leads.updateLead).mockResolvedValue(hot)
+    renderAt('/leads/l1/edit', manager)
+    await screen.findByRole('option', { name: 'Bob Ray' })
+    const owner = screen.getByLabelText('Owner')
+    expect(owner).toHaveDisplayValue('Former user (inactive)')
+    await userEvent.selectOptions(owner, '')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+    await waitFor(() =>
+      expect(leads.updateLead).toHaveBeenCalledWith(
+        'l1',
+        expect.objectContaining({ ownerId: null }),
+      ),
+    )
   })
 
   it('says when the lead does not exist', async () => {

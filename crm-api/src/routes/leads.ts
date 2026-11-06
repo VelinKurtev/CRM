@@ -1,10 +1,11 @@
 import { Router } from 'express'
 import { z } from 'zod'
 
+import { audit } from '../lib/audit.js'
 import { HttpError } from '../lib/http-error.js'
 import { prisma } from '../lib/prisma.js'
 import { optionalText, requiredText } from '../lib/validation.js'
-import { requirePermission } from '../middleware/authorize.js'
+import { getPermissions, requirePermission } from '../middleware/authorize.js'
 import { parseQuery, validateBody } from '../middleware/validate.js'
 
 export const leadsRouter = Router()
@@ -79,6 +80,15 @@ const present = ({ value, _count, ...lead }: NonNullable<Row>) => ({
   attachmentCount: _count.attachments,
 })
 
+const NOT_ALLOWED_TO_ASSIGN = 'Only managers can give a lead to someone else'
+
+/** Choosing who owns a lead is for people with `leads:assign`; everyone else works their own. */
+async function assertMayAssign(userId: string) {
+  if (!(await getPermissions(userId)).has('leads:assign')) {
+    throw new HttpError(403, NOT_ALLOWED_TO_ASSIGN, { ownerId: NOT_ALLOWED_TO_ASSIGN })
+  }
+}
+
 /** A lead's owner must be an active user. */
 async function assertOwnerActive(ownerId: string | null | undefined) {
   if (!ownerId) return
@@ -133,8 +143,8 @@ leadsRouter.get('/leads', requirePermission('leads:read'), async (req, res) => {
   res.json({ leads: rows.map(present), total, page, pageSize, stageCounts })
 })
 
-/** Active users a lead can be given to, for the owner choice on the form. */
-leadsRouter.get('/leads/owners', requirePermission('leads:write'), async (_req, res) => {
+/** Active users a lead can be given to, for the owner choice on the form and the list. */
+leadsRouter.get('/leads/owners', requirePermission('leads:assign'), async (_req, res) => {
   const users = await prisma.user.findMany({
     where: { isActive: true },
     orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }, { id: 'asc' }],
@@ -151,9 +161,12 @@ leadsRouter.post(
   validateBody(createLeadSchema),
   async (req, res) => {
     const body = req.body as z.infer<typeof createLeadSchema>
+    const userId = req.auth!.userId
+    // A lead is yours when you add it; giving it to someone else is the manager's call.
+    if (body.ownerId && body.ownerId !== userId) await assertMayAssign(userId)
     await assertOwnerActive(body.ownerId)
     const created = await prisma.lead.create({
-      data: { ...body, notes: body.notes || undefined, ownerId: body.ownerId ?? req.auth!.userId },
+      data: { ...body, notes: body.notes || undefined, ownerId: body.ownerId ?? userId },
       select: { id: true },
     })
     res.status(201).json({ lead: present((await findOne(created.id))!) })
@@ -173,14 +186,29 @@ leadsRouter.patch(
   async (req, res) => {
     const id = idOf(req)
     const body = req.body as z.infer<typeof updateLeadSchema>
-    if (!(await prisma.lead.findUnique({ where: { id }, select: { id: true } }))) {
-      throw new HttpError(404, 'Lead not found')
+    const before = await prisma.lead.findUnique({ where: { id }, select: { ownerId: true } })
+    if (!before) throw new HttpError(404, 'Lead not found')
+    const userId = req.auth!.userId
+    // Sending the owner it already has is not a reassignment.
+    const reassigned = body.ownerId !== undefined && body.ownerId !== before.ownerId
+    if (reassigned) {
+      await assertMayAssign(userId)
+      await assertOwnerActive(body.ownerId)
     }
-    await assertOwnerActive(body.ownerId)
     await prisma.lead.update({
       where: { id },
       data: { ...body, notes: body.notes === '' ? null : body.notes },
     })
+    if (reassigned) {
+      await audit({
+        action: 'LEAD_ASSIGNED',
+        userId,
+        entityType: 'Lead',
+        entityId: id,
+        changes: { from: before.ownerId, to: body.ownerId ?? null },
+        ip: req.ip,
+      })
+    }
     res.json({ lead: present((await findOne(id))!) })
   },
 )

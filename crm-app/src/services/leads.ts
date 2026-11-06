@@ -37,7 +37,8 @@ export type LeadUpdate = {
   priority: LeadPriority
   status: LeadStatus
   notes: string | null
-  ownerId: string | null
+  /** Only sent by people who may assign leads; leaving it out keeps the owner. */
+  ownerId?: string | null
 }
 
 export type LeadsPage = {
@@ -69,6 +70,10 @@ export const updateLead = (id: string, body: LeadUpdate) =>
 /** Move a lead to another pipeline stage, leaving everything else as it is. */
 export const setLeadStage = (id: string, status: LeadStatus) =>
   api.patch<{ lead: Lead }>(`/leads/${id}`, { status }).then((r) => r.data.lead)
+
+/** Give a lead to someone, or to nobody (`null`). Needs `leads:assign`. */
+export const setLeadOwner = (id: string, ownerId: string | null) =>
+  api.patch<{ lead: Lead }>(`/leads/${id}`, { ownerId }).then((r) => r.data.lead)
 
 export const listLeadOwners = () =>
   api.get<{ owners: Person[] }>('/leads/owners').then((r) => r.data.owners)

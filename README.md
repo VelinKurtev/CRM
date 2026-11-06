@@ -113,7 +113,8 @@ their letter case. Click a name for the company page: its contacts, deals and no
 **Leads** in the sidebar lists potential customers, newest first (search by title or source, filter by stage and
 priority). Sales users and above can add and edit them: title (required), source, estimated value in USD, priority
 (low, medium, high), status, owner and notes. A new lead is *New*, *Medium* priority and owned by whoever creates it;
-the owner can be any active user.
+only managers and admins can choose another owner or reassign a lead: they get an **Owner** choice on the lead form
+and in each row of the list, and every change is written to the audit log.
 
 Open a lead's **Edit** page to keep related files with it: add proposals, quotes or anything else (up to 10 MB each,
 25 per lead), download them later, or remove them. Files are stored in the database, so they are backed up with the

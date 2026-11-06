@@ -13,11 +13,26 @@ leads sees the list; **New lead** and each row's **Edit** appear for people who 
 | Value | Optional estimated worth in USD, 0 or more, up to two decimals |
 | Priority | Low, Medium (the default) or High |
 | Stage | New Lead (the default), Contacted, Qualified, Proposal Sent, Negotiation, Won or Lost. See below |
-| Owner | Any active user. Left blank on the new-lead form it means you |
+| Owner | Whoever creates the lead, unless a manager or admin gives it to another active user. See [Assigning leads](#assigning-leads) |
 | Notes | Optional text, up to 5000 characters |
 
-On the edit form, clearing source, value or notes removes them, and the owner can be set to *Nobody*. The owner
-cannot be an inactive user.
+On the edit form, clearing source, value or notes removes them.
+
+## Assigning leads
+
+Work is handed out by **managers and admins** (the `leads:assign` permission). Sales users own the leads they create
+and cannot give a lead away, take someone else's, or pick another owner when creating one: the Owner choice simply
+isn't shown to them, and the API refuses it (403).
+
+People who can assign:
+
+- **From the list**: every row has an owner dropdown. Pick someone to reassign the lead at once, or **Nobody** to leave
+  it unowned.
+- **On the form**: the Owner field on the new and edit lead pages. Leaving it on *Me* when creating keeps the lead.
+
+The new owner must be an active user. A lead whose owner has since been deactivated shows them as *inactive* and can
+still be edited; it is only the next reassignment that has to name an active user. Each reassignment is written to the
+audit log (who, which lead, from whom, to whom).
 
 ## Pipeline stages
 

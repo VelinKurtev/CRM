@@ -7,7 +7,7 @@ single source of truth is `crm-api/src/lib/permissions.ts`, which is synced to t
 | --- | --- | --- | --- | --- |
 | `contacts` | read, write, delete, delete_own, export | read, write, delete, export | read, write, delete_own | read |
 | `companies` | read, write, delete | read, write, delete | read, write | read |
-| `leads` | read, write, delete | read, write, delete | read, write | — |
+| `leads` | read, write, delete, assign | read, write, delete, assign | read, write | — |
 | `deals` | read, write, delete | read, write, delete | read, write | read |
 | `tasks` | read, write, delete | read, write, delete | read, write, delete | read, write |
 | `activities` | read, write, delete | read, write, delete | read, write, delete | read, write |
@@ -21,6 +21,7 @@ single source of truth is `crm-api/src/lib/permissions.ts`, which is synced to t
 | `settings` | manage | — | — | — |
 
 Notes: `contacts:delete_own` lets a person delete contacts they own (Admins and Managers already have `delete` for any).
+`leads:assign` chooses or changes a lead's owner; Sales own the leads they create but cannot hand them out.
 `reports:read` includes the dashboard revenue chart. `users:manage` assigns roles.
 This table is generated from the matrix in the code, so it is exact as of the last update.
 

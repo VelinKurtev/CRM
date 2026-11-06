@@ -17,6 +17,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { LEAD_PRIORITIES, LEAD_STATUSES } from '@/services/lead-options'
+import { usePermission } from '@/hooks/use-permission'
 import { listLeadOwners } from '@/services/leads'
 import {
   emptyLead,
@@ -46,7 +47,13 @@ export function LeadForm<T>({
   onCancel: () => void
 }) {
   const form = useForm<LeadFormValues>({ resolver: zodResolver(leadSchema), defaultValues })
-  const owners = useQuery({ queryKey: ['lead-owners'], queryFn: listLeadOwners })
+  // Only managers choose who owns a lead; everyone else's leads are their own.
+  const canAssign = usePermission('leads:assign')
+  const owners = useQuery({
+    queryKey: ['lead-owners'],
+    queryFn: listLeadOwners,
+    enabled: canAssign,
+  })
 
   const mutation = useMutation({
     mutationFn: save,
@@ -139,15 +146,23 @@ export function LeadForm<T>({
               'Stage',
               LEAD_STATUSES.map((s) => ({ value: s, label: STATUS_LABELS[s] })),
             )}
-            <div className="sm:col-span-2">
-              {choice('ownerId', 'Owner', [
-                { value: '', label: noOwnerLabel },
-                ...(owners.data ?? []).map((o) => ({
-                  value: o.id,
-                  label: `${o.firstName} ${o.lastName}`,
-                })),
-              ])}
-            </div>
+            {canAssign && (
+              <div className="sm:col-span-2">
+                {choice('ownerId', 'Owner', [
+                  { value: '', label: noOwnerLabel },
+                  ...(owners.data ?? []).map((o) => ({
+                    value: o.id,
+                    label: `${o.firstName} ${o.lastName}`,
+                  })),
+                  // The current owner may have been deactivated, so is not on the list any more.
+                  ...(owners.data &&
+                  defaultValues.ownerId &&
+                  !owners.data.some((o) => o.id === defaultValues.ownerId)
+                    ? [{ value: defaultValues.ownerId, label: 'Former user (inactive)' }]
+                    : []),
+                ])}
+              </div>
+            )}
             <div className="sm:col-span-2">
               <FormField
                 control={form.control}

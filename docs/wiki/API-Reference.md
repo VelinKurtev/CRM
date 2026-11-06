@@ -56,9 +56,9 @@ Swagger UI at **http://localhost:4000/api/docs**; the raw spec is at `/api/opena
 | `PATCH /companies/{id}` | `companies:write` | Update (only what you send; `null` clears an optional field) |
 | `GET /leads` | `leads:read` | Leads newest first (search `q`, filter `status`, `priority`, paging) with the number of leads in each stage |
 | `GET /leads/{id}` | `leads:read` | One lead |
-| `GET /leads/owners` | `leads:write` | Active users a lead can be given to |
-| `POST /leads` | `leads:write` | Create (only `title` required; owner defaults to the caller) |
-| `PATCH /leads/{id}` | `leads:write` | Update (only what you send; `null` clears an optional field) |
+| `GET /leads/owners` | `leads:assign` | Active users a lead can be given to |
+| `POST /leads` | `leads:write` | Create (only `title` required; owner is the caller, another owner needs `leads:assign`) |
+| `PATCH /leads/{id}` | `leads:write` | Update (only what you send; `null` clears an optional field; changing `ownerId` needs `leads:assign` and is audited) |
 | `GET /leads/{id}/attachments` | `leads:read` | The lead's files (without their contents) |
 | `POST /leads/{id}/attachments` | `leads:write` | Attach a file: body is the file as `application/octet-stream`, `?name=` and `?type=`; 10 MB, 25 per lead |
 | `GET /leads/{id}/attachments/{attachmentId}` | `leads:read` | Download a file |

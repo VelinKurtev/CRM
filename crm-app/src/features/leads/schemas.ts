@@ -60,8 +60,11 @@ export function toNewLead(v: LeadFormValues): NewLead {
   return body
 }
 
-/** The update body: blank optional fields become `null`, which clears them on the server. */
-export function toLeadUpdate(v: LeadFormValues): LeadUpdate {
+/**
+ * The update body: blank optional fields become `null`, which clears them on the server. The owner
+ * is only sent by people who may assign leads; for everyone else it stays as it is.
+ */
+export function toLeadUpdate(v: LeadFormValues, canAssign: boolean): LeadUpdate {
   return {
     title: v.title.trim(),
     source: v.source.trim() || null,
@@ -69,7 +72,7 @@ export function toLeadUpdate(v: LeadFormValues): LeadUpdate {
     priority: v.priority,
     status: v.status,
     notes: v.notes.trim() || null,
-    ownerId: v.ownerId || null,
+    ...(canAssign ? { ownerId: v.ownerId || null } : {}),
   }
 }
 

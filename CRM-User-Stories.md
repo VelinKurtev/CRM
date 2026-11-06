@@ -141,8 +141,10 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
   As a Sales user, I want to attach files to a lead, so that related material is kept together.
   - [x] Add several files at once (up to 10 MB each, 25 per lead), download them and remove them.
 
-- [ ] **US-029 – Lead assignment**
+- [x] **US-029 – Lead assignment**
   As a Manager, I want to assign or reassign a lead owner, so that work is distributed.
+  - [x] Only managers and admins choose or change a lead's owner; Sales own the leads they create.
+  - [x] Reassign from the Leads list or the lead's Edit page; every change is recorded in the audit log.
 
 - [ ] **US-030 – Create and edit deal**
   As a Sales user, I want to create a deal with name, customer, value, stage, expected closing date and probability, so that sales opportunities are tracked.
