@@ -12,3 +12,10 @@ export const LEAD_STATUSES = [
   'LOST',
 ] as const
 export type LeadStatus = (typeof LEAD_STATUSES)[number]
+
+/** The stages a lead can be converted into a deal from: qualified, and not yet won or lost. */
+export const CONVERTIBLE_LEAD_STAGES: readonly LeadStatus[] = [
+  'QUALIFIED',
+  'PROPOSAL_SENT',
+  'NEGOTIATION',
+]

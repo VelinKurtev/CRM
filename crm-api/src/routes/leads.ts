@@ -66,6 +66,9 @@ const leadSelect = {
   createdAt: true,
   updatedAt: true,
   owner: { select: { id: true, firstName: true, lastName: true } },
+  contact: { select: { id: true, firstName: true, lastName: true } },
+  /** The deal this lead became, if it has been converted. */
+  deal: { select: { id: true, title: true } },
   _count: { select: { attachments: true } },
 } as const
 
@@ -89,6 +92,9 @@ async function assertMayAssign(userId: string) {
   }
 }
 
+/** A lead as the API shows it. */
+export const loadLead = async (leadId: string) => present((await findOne(leadId))!)
+
 /** A lead's owner must be an active user. */
 async function assertOwnerActive(ownerId: string | null | undefined) {
   if (!ownerId) return
@@ -106,14 +112,21 @@ const listQuery = z.object({
   q: z.string().trim().max(100).default(''),
   status: status.optional(),
   priority: priority.optional(),
+  /** Leads already converted into deals are left out unless asked for. */
+  converted: z
+    .enum(['true', 'false'], 'converted must be true or false')
+    .default('false')
+    .transform((v) => v === 'true'),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 })
 
-/** Leads, newest first, for the leads page. */
+/** Leads, newest first, for the leads page. Converted leads are left out unless `?converted=true`. */
 leadsRouter.get('/leads', requirePermission('leads:read'), async (req, res) => {
-  const { q, status, priority, page, pageSize } = parseQuery(listQuery, req.query)
+  const { q, status, priority, converted, page, pageSize } = parseQuery(listQuery, req.query)
   const where = {
+    // A converted lead has become a deal, so it is out of the way unless it is asked for.
+    ...(converted ? {} : { dealId: null }),
     ...(q
       ? {
           OR: [

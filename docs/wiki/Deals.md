@@ -17,7 +17,7 @@ Everyone who can read deals sees the list; **New deal** and each row's **Edit** 
 | Probability | Whole number 0 to 100: the chance of winning. See below |
 | Expected closing date | Optional calendar date |
 
-The person who creates a deal is its owner. The dashboard's **Add deal** shortcut creates one with just a name, value
+The person who creates a deal is its owner (a deal converted from a lead stays with the lead's owner). The dashboard's **Add deal** shortcut creates one with just a name, value
 and date; open it from **Deals** to fill in the rest.
 
 ## Stages, status and probability
@@ -54,4 +54,5 @@ name (a link to edit it), its company or contact, value, probability and expecte
 
 ## Not here yet
 
-Converting a lead into a deal and managing pipelines come with their own stories.
+Managing pipelines and stages comes with its own story. Deals can also come from leads: see *Converting a lead into a
+deal* on the [[Leads]] page.

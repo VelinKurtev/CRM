@@ -129,6 +129,12 @@ Sample files to try it with, which the API tests also use, are in `crm-api/src/t
 | `empty.txt` | Refused: the file is empty |
 | `oversized.bin` | Refused: over 10 MB. Not kept in git; create it with `node crm-api/src/test/fixtures/attachments/make-oversized.mjs` |
 
+A qualified lead (Qualified, Proposal Sent or Negotiation) can be turned into a deal with **Convert** on its row or
+Edit page: the deal form opens already filled in from the lead (name, value, contact), you check it and press
+**Convert to deal**. The lead's notes become a note on the deal, its tags come across, the lead moves to Won and leaves
+the Leads list (tick **Show converted** to see it again, marked **Converted** with a link to its deal), and the deal stays
+with the lead's owner. A lead can only be converted once.
+
 ## Deals
 
 **Deals** in the sidebar lists sales opportunities, newest first (search by deal or company name, filter by open,

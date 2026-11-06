@@ -155,8 +155,9 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
   As a Sales user, I want a Kanban board with drag-and-drop between stages, so that I can update deals quickly.
   - [x] Drag a card to another column, or use the menu on the card (also for keyboard and touch); the move shows at once and is undone if refused.
 
-- [ ] **US-032 – Convert lead to deal**
+- [x] **US-032 – Convert lead to deal**
   As a Sales user, I want to convert a qualified lead into a deal, so that I don't re-enter data.
+  - [x] The deal starts from the lead's name, value, contact and owner; its notes and tags come across; the lead is marked Won and linked to the deal, and cannot be converted twice.
 
 - [ ] **US-033 – Manage pipelines and stages**
   As an Admin, I want to configure pipelines and stages, so that the process matches our business.

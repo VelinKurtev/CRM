@@ -65,6 +65,28 @@ Downloads are always saved as files, never opened inside the page, whatever thei
 script cannot run in the CRM. The API lets anyone with `leads:read` list and download files; the Edit page is where
 the files are managed.
 
-## Not here yet
+## Converting a lead into a deal
 
-Reassignment by managers and converting a lead to a deal come with their own stories.
+When a lead is **Qualified**, **Proposal Sent** or **Negotiation**, people who can write both leads and deals see a
+**Convert** button on its row in the list and **Convert to deal** on its Edit page. It opens the new-deal form already
+filled in from the lead, so nothing is typed twice:
+
+| From the lead | Becomes |
+| --- | --- |
+| Title | The deal's name |
+| Value | The deal's value |
+| Contact | The deal's contact |
+| Owner | The deal's owner (the person converting it, if the lead had none) |
+| Notes | A note on the deal, written by whoever converts it |
+| Tags | The same tags on the deal |
+
+Everything on the form can be changed before pressing **Convert to deal**; the stage starts as the first stage of the
+default pipeline, like any new deal. Files attached to the lead stay with the lead.
+
+Converting is all or nothing. Afterwards the lead moves to **Won** and **leaves the Leads list**, since it is a deal now
+(the stage counts leave it out too). Tick **Show converted** above the list to see such leads again: they appear with a
+**Converted** badge linking to their deal. A converted lead can't be converted again (another person pressing the button at the same moment gets a message instead of a
+second deal). New and Contacted leads are not qualified yet, and Won and Lost leads are finished, so they have no
+Convert button. If the deal is deleted later, the lead simply loses the link.
+
+The conversion is written to the audit log.

@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Paperclip, Pencil, Plus, Target } from 'lucide-react'
+import { ArrowRightLeft, Paperclip, Pencil, Plus, Target } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
@@ -21,7 +21,12 @@ import {
 } from '@/components/ui/table'
 import { formatMoney } from '@/features/dashboard/format'
 import { usePermission } from '@/hooks/use-permission'
-import { LEAD_PRIORITIES, LEAD_STATUSES, type LeadStatus } from '@/services/lead-options'
+import {
+  CONVERTIBLE_LEAD_STAGES,
+  LEAD_PRIORITIES,
+  LEAD_STATUSES,
+  type LeadStatus,
+} from '@/services/lead-options'
 import { listLeadOwners, listLeads, setLeadOwner, setLeadStage, type Lead } from '@/services/leads'
 import { PRIORITY_LABELS, STATUS_LABELS } from './schemas'
 
@@ -41,9 +46,11 @@ export function LeadsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const canWrite = usePermission('leads:write')
   const canAssign = usePermission('leads:assign')
+  const canWriteDeals = usePermission('deals:write')
   const q = searchParams.get('q') ?? ''
   const status = searchParams.get('status') ?? ''
   const priority = searchParams.get('priority') ?? ''
+  const showConverted = searchParams.get('converted') === '1'
   const pageParam = Number(searchParams.get('page'))
   const page = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1
   const filtered = Boolean(q || status || priority)
@@ -62,12 +69,13 @@ export function LeadsPage() {
     )
 
   const { data, isPending, isError, error, isPlaceholderData } = useQuery({
-    queryKey: ['leads', { q, status, priority, page }],
+    queryKey: ['leads', { q, status, priority, showConverted, page }],
     queryFn: () =>
       listLeads({
         q: q || undefined,
         status: status || undefined,
         priority: priority || undefined,
+        converted: showConverted || undefined,
         page,
         pageSize: PAGE_SIZE,
       }),
@@ -110,6 +118,18 @@ export function LeadsPage() {
           extraActive={Boolean(status)}
           onChange={(v) => update({ status: v.status, priority: v.priority, page: undefined })}
         />
+        {/* A converted lead has become a deal, so it is out of the way unless asked for. */}
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={showConverted}
+            onChange={(e) =>
+              update({ converted: e.target.checked ? '1' : undefined, page: undefined })
+            }
+            className="size-4 rounded border-input accent-primary"
+          />
+          Show converted
+        </label>
       </div>
 
       <nav aria-label="Pipeline stages" className="flex flex-wrap gap-2">
@@ -186,6 +206,20 @@ export function LeadsPage() {
                 <TableRow key={l.id}>
                   <TableCell className="font-medium">
                     {l.title}
+                    {l.deal && (
+                      <Badge variant="outline" className="ml-2 font-normal">
+                        {canWriteDeals ? (
+                          <Link
+                            to={`/deals/${l.deal.id}/edit`}
+                            aria-label={`Converted to deal ${l.deal.title}`}
+                          >
+                            Converted
+                          </Link>
+                        ) : (
+                          'Converted'
+                        )}
+                      </Badge>
+                    )}
                     {l.attachmentCount > 0 && (
                       <span
                         className="ml-2 inline-flex items-center gap-0.5 text-xs font-normal text-muted-foreground"
@@ -221,7 +255,17 @@ export function LeadsPage() {
                     )}
                   </TableCell>
                   {canWrite && (
-                    <TableCell className="text-right">
+                    <TableCell className="text-right whitespace-nowrap">
+                      {canWriteDeals && !l.deal && CONVERTIBLE_LEAD_STAGES.includes(l.status) && (
+                        <Button asChild variant="ghost" size="sm">
+                          <Link
+                            to={`/leads/${l.id}/convert`}
+                            aria-label={`Convert ${l.title} to a deal`}
+                          >
+                            <ArrowRightLeft /> Convert
+                          </Link>
+                        </Button>
+                      )}
                       <Button asChild variant="ghost" size="sm">
                         <Link to={`/leads/${l.id}/edit`} aria-label={`Edit ${l.title}`}>
                           <Pencil /> Edit

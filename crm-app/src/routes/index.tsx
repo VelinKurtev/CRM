@@ -9,6 +9,7 @@ import { DealBoardPage } from '@/features/deals/deal-board-page'
 import { DealsPage } from '@/features/deals/deals-page'
 import { EditDealPage } from '@/features/deals/edit-deal-page'
 import { NewDealPage } from '@/features/deals/new-deal-page'
+import { ConvertLeadPage } from '@/features/leads/convert-lead-page'
 import { EditLeadPage } from '@/features/leads/edit-lead-page'
 import { LeadsPage } from '@/features/leads/leads-page'
 import { NewLeadPage } from '@/features/leads/new-lead-page'
@@ -153,6 +154,16 @@ export const routes = [
                         path: ':id/edit',
                         element: <EditLeadPage />,
                         handle: { crumb: 'Edit lead' },
+                      },
+                      {
+                        element: <RequirePermission permission="deals:write" />,
+                        children: [
+                          {
+                            path: ':id/convert',
+                            element: <ConvertLeadPage />,
+                            handle: { crumb: 'Convert to deal' },
+                          },
+                        ],
                       },
                     ],
                   },

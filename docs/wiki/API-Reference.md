@@ -60,9 +60,10 @@ Swagger UI at **http://localhost:4000/api/docs**; the raw spec is at `/api/opena
 | `GET /deals/{id}` | `deals:read` | One deal |
 | `POST /deals` | `deals:write` | Create (only `title` required; starts in the default pipeline's first stage unless `stageId` is given) |
 | `PATCH /deals/{id}` | `deals:write` | Update (only what you send; `null` clears the date, company or contact; a stage change reopens or closes the deal) |
-| `GET /leads` | `leads:read` | Leads newest first (search `q`, filter `status`, `priority`, paging) with the number of leads in each stage |
+| `GET /leads` | `leads:read` | Leads newest first, without converted ones unless `converted=true` (search `q`, filter `status`, `priority`, paging) with the number of leads in each stage |
 | `GET /leads/{id}` | `leads:read` | One lead |
 | `GET /leads/owners` | `leads:assign` | Active users a lead can be given to |
+| `POST /leads/{id}/convert` | `leads:write` + `deals:write` | Turn a qualified lead into a deal (body optional: fields default from the lead; notes and tags come across; lead becomes Won and linked). All or nothing, once per lead |
 | `POST /leads` | `leads:write` | Create (only `title` required; owner is the caller, another owner needs `leads:assign`) |
 | `PATCH /leads/{id}` | `leads:write` | Update (only what you send; `null` clears an optional field; changing `ownerId` needs `leads:assign` and is audited) |
 | `GET /leads/{id}/attachments` | `leads:read` | The lead's files (without their contents) |

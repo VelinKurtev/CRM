@@ -940,7 +940,7 @@ export const openapi = {
         tags: ['Records'],
         summary: 'List leads',
         description:
-          'Requires `leads:read`. Newest first. Stages run NEW → CONTACTED → QUALIFIED → PROPOSAL_SENT → NEGOTIATION → WON or LOST. `q` matches title or source. Paged (default 20, up to 100).',
+          'Requires `leads:read`. Newest first, without leads that have been converted into deals (see `converted`). Stages run NEW → CONTACTED → QUALIFIED → PROPOSAL_SENT → NEGOTIATION → WON or LOST. `q` matches title or source. Paged (default 20, up to 100).',
         security: [{ bearerAuth: [] }],
         parameters: [
           { name: 'q', in: 'query', schema: { type: 'string' } },
@@ -964,6 +964,12 @@ export const openapi = {
             name: 'priority',
             in: 'query',
             schema: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] },
+          },
+          {
+            name: 'converted',
+            in: 'query',
+            description: 'Leads already converted into deals are left out unless `true`.',
+            schema: { type: 'boolean', default: false },
           },
           { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
           { name: 'pageSize', in: 'query', schema: { type: 'integer', default: 20, maximum: 100 } },
@@ -990,6 +996,27 @@ export const openapi = {
           '200': { description: '`{ owners }`' },
           '401': { $ref: '#/components/responses/Unauthorized' },
           '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/leads/{id}/convert': {
+      post: {
+        tags: ['Records'],
+        summary: 'Convert a lead into a deal',
+        description:
+          'Requires `leads:write` and `deals:write`. For a lead in Qualified, Proposal Sent or Negotiation that has not been converted. The body is optional and takes the same fields as creating a deal; anything left out comes from the lead: its name, value, contact and owner (or the caller if it has none). The lead’s notes become a note on the deal and its tags are copied; its files stay on the lead. The lead moves to Won and is linked to the deal (`lead.deal`). All or nothing. Returns `{ deal, lead }`.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/DealInput' } } },
+        },
+        responses: {
+          '201': { description: '`{ deal, lead }`' },
+          '400': { description: 'The deal is not valid (nothing is changed)' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Lead not found' },
+          '409': { description: 'Not a qualified lead, or already converted' },
         },
       },
     },

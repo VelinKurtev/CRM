@@ -32,6 +32,8 @@ const hot: leads.Lead = {
   createdAt: '2026-11-01T10:00:00.000Z',
   owner: { id: '2', firstName: 'Bob', lastName: 'Ray' },
   attachmentCount: 2,
+  contact: null,
+  deal: null,
 }
 const bare: leads.Lead = {
   ...hot,
@@ -136,6 +138,30 @@ describe('Leads list', () => {
     renderAt('/leads?status=QUALIFIED&priority=HIGH')
     await screen.findByText('Website redesign')
     expect(lastList()).toMatchObject({ status: 'QUALIFIED', priority: 'HIGH' })
+  })
+
+  it('leaves converted leads out unless “Show converted” is ticked, keeping it in the address', async () => {
+    const router = renderAt('/leads?page=2')
+    await screen.findByText('Website redesign')
+    expect(lastList()).not.toHaveProperty('converted', true)
+    const box = screen.getByRole('checkbox', { name: 'Show converted' })
+    expect(box).not.toBeChecked()
+
+    await userEvent.click(box)
+    await waitFor(() => expect(lastList()).toMatchObject({ converted: true, page: 1 }))
+    expect(router.state.location.search).toBe('?converted=1')
+    expect(screen.getByRole('checkbox', { name: 'Show converted' })).toBeChecked()
+
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Show converted' }))
+    await waitFor(() => expect(router.state.location.search).toBe(''))
+    expect(lastList().converted).toBeUndefined()
+  })
+
+  it('starts with converted leads shown when the address says so', async () => {
+    renderAt('/leads?converted=1')
+    await screen.findByText('Website redesign')
+    expect(lastList()).toMatchObject({ converted: true })
+    expect(screen.getByRole('checkbox', { name: 'Show converted' })).toBeChecked()
   })
 
   it('shows how many leads are in each stage, in pipeline order, and filters on click', async () => {

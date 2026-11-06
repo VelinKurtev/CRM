@@ -5,7 +5,7 @@ import type { PrismaClient } from '../generated/prisma/client.js'
  * If no pipeline exists yet, a standard one is created. Used by the seed and as a safety net
  * so deals can be added on a database that was never seeded; admins can reshape it later.
  */
-export async function ensureFirstDealStage(db: PrismaClient) {
+export async function ensureFirstDealStage(db: Pick<PrismaClient, 'stage' | 'pipeline'>) {
   const existing =
     (await db.stage.findFirst({
       where: { pipeline: { isDefault: true } },

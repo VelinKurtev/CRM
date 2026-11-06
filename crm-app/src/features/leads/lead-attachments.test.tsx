@@ -42,6 +42,8 @@ const lead: leads.Lead = {
   createdAt: '2026-11-01T10:00:00.000Z',
   owner: null,
   attachmentCount: 1,
+  contact: null,
+  deal: null,
 }
 const quote: leads.LeadAttachment = {
   id: 'a1',

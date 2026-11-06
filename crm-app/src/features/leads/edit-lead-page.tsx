@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { Target } from 'lucide-react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { ArrowRightLeft, Target } from 'lucide-react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
 import { getErrorMessage } from '@/api/client'
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { usePermission } from '@/hooks/use-permission'
+import { CONVERTIBLE_LEAD_STAGES } from '@/services/lead-options'
 import { getLead, updateLead } from '@/services/leads'
 import { LeadAttachments } from './lead-attachments'
 import { LeadForm } from './lead-form'
@@ -19,6 +20,7 @@ export function EditLeadPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const canAssign = usePermission('leads:assign')
+  const canWriteDeals = usePermission('deals:write')
   const { data, isPending, isError, error } = useQuery({
     queryKey: ['lead', id],
     queryFn: () => getLead(id),
@@ -47,9 +49,30 @@ export function EditLeadPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold">Edit {data.title}</h1>
-        <p className="text-muted-foreground">Clear a field to remove its value.</p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-semibold">Edit {data.title}</h1>
+          <p className="text-muted-foreground">Clear a field to remove its value.</p>
+        </div>
+        {canWriteDeals && !data.deal && CONVERTIBLE_LEAD_STAGES.includes(data.status) && (
+          <Button asChild variant="outline">
+            <Link to={`/leads/${id}/convert`}>
+              <ArrowRightLeft /> Convert to deal
+            </Link>
+          </Button>
+        )}
+        {data.deal && (
+          <p className="text-sm text-muted-foreground">
+            Converted to{' '}
+            {canWriteDeals ? (
+              <Link to={`/deals/${data.deal.id}/edit`} className="underline">
+                {data.deal.title}
+              </Link>
+            ) : (
+              data.deal.title
+            )}
+          </p>
+        )}
       </div>
       <LeadForm
         defaultValues={fromLead(data)}

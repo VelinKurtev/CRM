@@ -1,6 +1,7 @@
 import axios from 'axios'
 
 import { api } from '@/api/client'
+import type { Deal, NewDeal } from './deals'
 import type { LeadPriority, LeadStatus } from './lead-options'
 
 export type Person = { id: string; firstName: string; lastName: string }
@@ -16,6 +17,9 @@ export type Lead = {
   notes: string | null
   createdAt: string
   owner: Person | null
+  contact: Person | null
+  /** The deal this lead was converted into, once it has been. */
+  deal: { id: string; title: string } | null
   attachmentCount: number
 }
 
@@ -54,6 +58,8 @@ export const listLeads = (params: {
   q?: string
   status?: string
   priority?: string
+  /** Leads already converted into deals are left out unless this is `true`. */
+  converted?: boolean
   page?: number
   pageSize?: number
 }) => api.get<LeadsPage>('/leads', { params }).then((r) => r.data)
@@ -77,6 +83,10 @@ export const setLeadOwner = (id: string, ownerId: string | null) =>
 
 export const listLeadOwners = () =>
   api.get<{ owners: Person[] }>('/leads/owners').then((r) => r.data.owners)
+
+/** Make a deal from a qualified lead; anything left out of `body` comes from the lead. */
+export const convertLead = (id: string, body: NewDeal) =>
+  api.post<{ deal: Deal; lead: Lead }>(`/leads/${id}/convert`, body).then((r) => r.data)
 
 // ───────── Attachments ─────────
 
