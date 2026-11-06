@@ -134,18 +134,27 @@ enum LeadStatus {
   CONVERTED
 }
 
+enum LeadPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
 model Lead {
-  id        String     @id @default(cuid())
+  id        String       @id @default(cuid())
   title     String
   source    String?
-  status    LeadStatus @default(NEW)
-  score     Int        @default(0)
+  value     Decimal?     @db.Decimal(14, 2) // estimated worth
+  priority  LeadPriority @default(MEDIUM)
+  notes     String?
+  status    LeadStatus   @default(NEW)
+  score     Int          @default(0)
   contactId String?
-  contact   Contact?   @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  contact   Contact?     @relation(fields: [contactId], references: [id], onDelete: SetNull)
   ownerId   String?
-  owner     User?      @relation("LeadOwner", fields: [ownerId], references: [id], onDelete: SetNull)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  owner     User?        @relation("LeadOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   tags TagOnLead[]
 

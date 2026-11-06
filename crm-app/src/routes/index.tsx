@@ -5,6 +5,9 @@ import { CompaniesPage } from '@/features/companies/companies-page'
 import { CompanyDetailPage } from '@/features/companies/company-detail-page'
 import { EditCompanyPage } from '@/features/companies/edit-company-page'
 import { NewCompanyPage } from '@/features/companies/new-company-page'
+import { EditLeadPage } from '@/features/leads/edit-lead-page'
+import { LeadsPage } from '@/features/leads/leads-page'
+import { NewLeadPage } from '@/features/leads/new-lead-page'
 import { ContactsPage } from '@/features/contacts/contacts-page'
 import { ContactDetailPage } from '@/features/contacts/contact-detail-page'
 import { ImportContactsPage } from '@/features/contacts/import-contacts-page'
@@ -99,6 +102,29 @@ export const routes = [
                         path: ':id/edit',
                         element: <EditCompanyPage />,
                         handle: { crumb: 'Edit company' },
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            element: <RequirePermission permission="leads:read" />,
+            children: [
+              {
+                path: '/leads',
+                handle: { crumb: 'Leads' },
+                children: [
+                  { index: true, element: <LeadsPage /> },
+                  {
+                    element: <RequirePermission permission="leads:write" />,
+                    children: [
+                      { path: 'new', element: <NewLeadPage />, handle: { crumb: 'New lead' } },
+                      {
+                        path: ':id/edit',
+                        element: <EditLeadPage />,
+                        handle: { crumb: 'Edit lead' },
                       },
                     ],
                   },

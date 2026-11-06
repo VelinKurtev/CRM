@@ -1,0 +1,287 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { AxiosError, type AxiosResponse } from 'axios'
+import { createMemoryRouter, RouterProvider } from 'react-router-dom'
+import { vi } from 'vitest'
+
+import { routes } from '@/routes'
+import * as leads from '@/services/leads'
+import { useAuthStore } from '@/store/auth-store'
+
+vi.mock('@/services/leads')
+
+const sales = {
+  id: '1',
+  email: 'ann@b.com',
+  firstName: 'Ann',
+  lastName: 'Lee',
+  avatarUrl: null,
+  permissions: ['leads:read', 'leads:write'],
+  role: 'SALES' as const,
+}
+
+const hot: leads.Lead = {
+  id: 'l1',
+  title: 'Website redesign',
+  source: 'Trade show',
+  value: 15000.5,
+  priority: 'HIGH',
+  status: 'CONTACTED',
+  notes: 'Wants a demo',
+  createdAt: '2026-11-01T10:00:00.000Z',
+  owner: { id: '2', firstName: 'Bob', lastName: 'Ray' },
+}
+const bare: leads.Lead = {
+  ...hot,
+  id: 'l2',
+  title: 'Cold enquiry',
+  source: null,
+  value: null,
+  priority: 'LOW',
+  status: 'NEW',
+  notes: null,
+  owner: null,
+}
+
+function renderAt(url: string, permissions = sales.permissions) {
+  useAuthStore.setState({ token: 'jwt', user: { ...sales, permissions }, initialized: true })
+  const router = createMemoryRouter(routes, { initialEntries: [url] })
+  render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  )
+  return router
+}
+
+const apiError = (status: number, message: string, details?: object) =>
+  new AxiosError('bad', String(status), undefined, undefined, {
+    status,
+    data: { error: { message, details } },
+  } as AxiosResponse)
+
+const lastList = () => vi.mocked(leads.listLeads).mock.lastCall![0]
+
+beforeEach(() => {
+  vi.resetAllMocks()
+  vi.mocked(leads.listLeads).mockResolvedValue({
+    leads: [hot, bare],
+    total: 2,
+    page: 1,
+    pageSize: 20,
+  })
+  vi.mocked(leads.listLeadOwners).mockResolvedValue([
+    { id: '1', firstName: 'Ann', lastName: 'Lee' },
+    { id: '2', firstName: 'Bob', lastName: 'Ray' },
+  ])
+})
+
+describe('Leads list', () => {
+  it('shows each lead’s details, with quiet blanks', async () => {
+    renderAt('/leads')
+    const row = (await screen.findByText('Website redesign')).closest('tr')!
+    expect(within(row).getByText('Trade show')).toBeInTheDocument()
+    expect(within(row).getByText('$15,001')).toBeInTheDocument()
+    expect(within(row).getByText('High')).toBeInTheDocument()
+    expect(within(row).getByText('Contacted')).toBeInTheDocument()
+    expect(within(row).getByText('Bob Ray')).toBeInTheDocument()
+    const blank = screen.getByText('Cold enquiry').closest('tr')!
+    expect(within(blank).getAllByText('None')).toHaveLength(3)
+    expect(screen.getByText('2 leads')).toBeInTheDocument()
+  })
+
+  it('is in the sidebar', async () => {
+    renderAt('/leads')
+    await screen.findByText('Website redesign')
+    const nav = screen.getAllByRole('navigation', { name: 'Main' })[0]
+    expect(within(nav).getByRole('link', { name: 'Leads' })).toHaveAttribute('href', '/leads')
+  })
+
+  it('denies access without leads:read', () => {
+    renderAt('/leads', [])
+    expect(screen.getByText('Access denied')).toBeInTheDocument()
+    expect(leads.listLeads).not.toHaveBeenCalled()
+  })
+
+  it('searches, keeping the query in the address and resetting the page', async () => {
+    const router = renderAt('/leads?page=3')
+    await screen.findByText('Website redesign')
+    expect(lastList()).toMatchObject({ page: 3 })
+    await userEvent.type(screen.getByRole('searchbox'), 'show')
+    await waitFor(() => expect(lastList()).toMatchObject({ q: 'show', page: 1 }))
+    expect(router.state.location.search).toBe('?q=show')
+  })
+
+  it('filters by status and priority from the address', async () => {
+    renderAt('/leads?status=QUALIFIED&priority=HIGH')
+    await screen.findByText('Website redesign')
+    expect(lastList()).toMatchObject({ status: 'QUALIFIED', priority: 'HIGH' })
+  })
+
+  it('offers New lead and Edit to writers only', async () => {
+    renderAt('/leads')
+    await screen.findByText('Website redesign')
+    expect(screen.getByRole('link', { name: /New lead/ })).toHaveAttribute('href', '/leads/new')
+    expect(screen.getByRole('link', { name: 'Edit Website redesign' })).toHaveAttribute(
+      'href',
+      '/leads/l1/edit',
+    )
+  })
+
+  it('lets read-only roles look at leads but not change them', async () => {
+    renderAt('/leads', ['leads:read'])
+    expect(await screen.findByText('Website redesign')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /New lead/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Edit/ })).not.toBeInTheDocument()
+  })
+
+  it('has empty states for no leads and no matches', async () => {
+    vi.mocked(leads.listLeads).mockResolvedValue({ leads: [], total: 0, page: 1, pageSize: 20 })
+    const router = renderAt('/leads')
+    expect(await screen.findByText('No leads yet')).toBeInTheDocument()
+    router.navigate('/leads?q=zzz')
+    expect(await screen.findByText('No leads match')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Show all leads' }))
+    expect(await screen.findByText('No leads yet')).toBeInTheDocument()
+  })
+
+  it('shows an error if loading fails', async () => {
+    vi.mocked(leads.listLeads).mockRejectedValue(new Error('boom'))
+    renderAt('/leads')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load leads')
+  })
+})
+
+describe('New lead', () => {
+  it('is for roles with leads:write', () => {
+    renderAt('/leads/new', ['leads:read'])
+    expect(screen.getByText('Access denied')).toBeInTheDocument()
+  })
+
+  it('creates a lead with every field, sending the value as a number', async () => {
+    vi.mocked(leads.createLead).mockResolvedValue(hot)
+    const router = renderAt('/leads/new')
+    await userEvent.type(screen.getByLabelText('Title'), '  Website redesign ')
+    await userEvent.type(screen.getByLabelText('Source (optional)'), 'Trade show')
+    await userEvent.type(screen.getByLabelText('Estimated value in USD (optional)'), '15000.50')
+    await userEvent.selectOptions(screen.getByLabelText('Priority'), 'HIGH')
+    await userEvent.selectOptions(screen.getByLabelText('Status'), 'CONTACTED')
+    await screen.findByRole('option', { name: 'Bob Ray' })
+    await userEvent.selectOptions(screen.getByLabelText('Owner'), '2')
+    await userEvent.type(screen.getByLabelText('Notes (optional)'), 'Wants a demo')
+    await userEvent.click(screen.getByRole('button', { name: 'Create lead' }))
+
+    await waitFor(() =>
+      expect(leads.createLead).toHaveBeenCalledWith({
+        title: 'Website redesign',
+        source: 'Trade show',
+        value: 15000.5,
+        priority: 'HIGH',
+        status: 'CONTACTED',
+        notes: 'Wants a demo',
+        ownerId: '2',
+      }),
+    )
+    await waitFor(() => expect(router.state.location.pathname).toBe('/leads'))
+  })
+
+  it('needs only a title: medium priority, new, owned by me', async () => {
+    vi.mocked(leads.createLead).mockResolvedValue(bare)
+    renderAt('/leads/new')
+    expect(screen.getByLabelText('Owner')).toHaveDisplayValue('Me')
+    await userEvent.click(screen.getByRole('button', { name: 'Create lead' }))
+    expect(await screen.findByText('Title is required')).toBeInTheDocument()
+    expect(leads.createLead).not.toHaveBeenCalled()
+
+    await userEvent.type(screen.getByLabelText('Title'), 'Cold enquiry')
+    await userEvent.click(screen.getByRole('button', { name: 'Create lead' }))
+    await waitFor(() =>
+      expect(leads.createLead).toHaveBeenCalledWith({
+        title: 'Cold enquiry',
+        priority: 'MEDIUM',
+        status: 'NEW',
+      }),
+    )
+  })
+
+  it('checks the value before sending', async () => {
+    renderAt('/leads/new')
+    await userEvent.type(screen.getByLabelText('Title'), 'Lead')
+    await userEvent.type(screen.getByLabelText('Estimated value in USD (optional)'), '12,5')
+    await userEvent.click(screen.getByRole('button', { name: 'Create lead' }))
+    expect(await screen.findByText(/Enter an amount/)).toBeInTheDocument()
+    expect(leads.createLead).not.toHaveBeenCalled()
+  })
+
+  it('shows a field error from the server next to the field', async () => {
+    vi.mocked(leads.createLead).mockRejectedValue(
+      apiError(400, 'Choose an active user as owner', {
+        ownerId: 'Choose an active user as owner',
+      }),
+    )
+    const router = renderAt('/leads/new')
+    await userEvent.type(screen.getByLabelText('Title'), 'Lead')
+    await userEvent.click(screen.getByRole('button', { name: 'Create lead' }))
+    expect(await screen.findByText('Choose an active user as owner')).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/leads/new')
+  })
+
+  it('shows other failures at the top', async () => {
+    vi.mocked(leads.createLead).mockRejectedValue(new Error('boom'))
+    renderAt('/leads/new')
+    await userEvent.type(screen.getByLabelText('Title'), 'Lead')
+    await userEvent.click(screen.getByRole('button', { name: 'Create lead' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not save the lead')
+  })
+})
+
+describe('Edit lead', () => {
+  it('fills the form and saves changes, clearing emptied fields with null', async () => {
+    vi.mocked(leads.getLead).mockResolvedValue(hot)
+    vi.mocked(leads.updateLead).mockResolvedValue({ ...hot, title: 'Redesign' })
+    const router = renderAt('/leads/l1/edit')
+
+    const title = await screen.findByLabelText('Title')
+    expect(title).toHaveValue('Website redesign')
+    expect(screen.getByLabelText('Estimated value in USD (optional)')).toHaveValue('15000.5')
+    expect(screen.getByLabelText('Priority')).toHaveValue('HIGH')
+    expect(screen.getByLabelText('Status')).toHaveValue('CONTACTED')
+    expect(screen.getByLabelText('Notes (optional)')).toHaveValue('Wants a demo')
+    await waitFor(() => expect(screen.getByLabelText('Owner')).toHaveValue('2'))
+
+    await userEvent.clear(title)
+    await userEvent.type(title, 'Redesign')
+    await userEvent.clear(screen.getByLabelText('Source (optional)'))
+    await userEvent.clear(screen.getByLabelText('Notes (optional)'))
+    await userEvent.selectOptions(screen.getByLabelText('Status'), 'QUALIFIED')
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }))
+
+    await waitFor(() =>
+      expect(leads.updateLead).toHaveBeenCalledWith('l1', {
+        title: 'Redesign',
+        source: null,
+        value: 15000.5,
+        priority: 'HIGH',
+        status: 'QUALIFIED',
+        notes: null,
+        ownerId: '2',
+      }),
+    )
+    await waitFor(() => expect(router.state.location.pathname).toBe('/leads'))
+  })
+
+  it('says when the lead does not exist', async () => {
+    vi.mocked(leads.getLead).mockRejectedValue(apiError(404, 'Lead not found'))
+    renderAt('/leads/gone/edit')
+    expect(await screen.findByText('Lead not found')).toBeInTheDocument()
+  })
+
+  it('is for roles with leads:write', () => {
+    renderAt('/leads/l1/edit', ['leads:read'])
+    expect(screen.getByText('Access denied')).toBeInTheDocument()
+    expect(leads.getLead).not.toHaveBeenCalled()
+  })
+})

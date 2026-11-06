@@ -108,6 +108,13 @@ and edit or delete it later. See the wiki's Notes page for who can do what.
 edit them: name (required), industry, employees, annual revenue in USD and website. Names are unique whatever
 their letter case. Click a name for the company page: its contacts, deals and notes in one place. Contacts still link to a company by name on their form.
 
+## Leads
+
+**Leads** in the sidebar lists potential customers, newest first (search by title or source, filter by status and
+priority). Sales users and above can add and edit them: title (required), source, estimated value in USD, priority
+(low, medium, high), status, owner and notes. A new lead is *New*, *Medium* priority and owned by whoever creates it;
+the owner can be any active user.
+
 ## Wiki
 
 The project wiki is written in `docs/wiki/` (reviewed with the code). A workflow (`.github/workflows/wiki.yml`)

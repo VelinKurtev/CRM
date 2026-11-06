@@ -1,0 +1,69 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import axios from 'axios'
+import { Target } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'sonner'
+
+import { getErrorMessage } from '@/api/client'
+import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Skeleton } from '@/components/ui/skeleton'
+import { getLead, updateLead } from '@/services/leads'
+import { LeadForm } from './lead-form'
+import { fromLead, toLeadUpdate } from './schemas'
+
+export function EditLeadPage() {
+  const { id = '' } = useParams()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const { data, isPending, isError, error } = useQuery({
+    queryKey: ['lead', id],
+    queryFn: () => getLead(id),
+    retry: false,
+  })
+
+  if (isPending) return <Skeleton className="mx-auto h-96 max-w-3xl" aria-label="Loading lead" />
+
+  if (isError) {
+    const missing = axios.isAxiosError(error) && error.response?.status === 404
+    return (
+      <EmptyState
+        icon={<Target className="size-10" />}
+        title={missing ? 'Lead not found' : 'Could not load the lead'}
+        description={
+          missing ? 'It may have been removed.' : getErrorMessage(error, 'Please try again.')
+        }
+        action={
+          <Button variant="outline" onClick={() => navigate('/leads')}>
+            Back to leads
+          </Button>
+        }
+      />
+    )
+  }
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-4">
+      <div>
+        <h1 className="text-2xl font-semibold">Edit {data.title}</h1>
+        <p className="text-muted-foreground">Clear a field to remove its value.</p>
+      </div>
+      <LeadForm
+        defaultValues={fromLead(data)}
+        submitLabel="Save changes"
+        noOwnerLabel="Nobody"
+        save={(values) => updateLead(id, toLeadUpdate(values))}
+        onSaved={(lead) => {
+          toast.success(`${lead.title} was updated`)
+          void queryClient.invalidateQueries({ queryKey: ['lead', id] })
+          void queryClient.invalidateQueries({ queryKey: ['leads'] })
+          void queryClient.invalidateQueries({
+            predicate: (q) => String(q.queryKey[0]).startsWith('dashboard'),
+          })
+          navigate('/leads')
+        }}
+        onCancel={() => navigate(-1)}
+      />
+    </div>
+  )
+}

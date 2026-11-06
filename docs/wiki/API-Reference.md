@@ -54,6 +54,11 @@ Swagger UI at **http://localhost:4000/api/docs**; the raw spec is at `/api/opena
 | `GET /companies/{id}/overview` | `companies:read` | The company with its contacts, deals and notes (first 50 of each; a section you may not read is `null`) |
 | `POST /companies` | `companies:write` | Create (only `name` required; names unique ignoring case) |
 | `PATCH /companies/{id}` | `companies:write` | Update (only what you send; `null` clears an optional field) |
+| `GET /leads` | `leads:read` | Leads newest first (search `q`, filter `status`, `priority`, paging) |
+| `GET /leads/{id}` | `leads:read` | One lead |
+| `GET /leads/owners` | `leads:write` | Active users a lead can be given to |
+| `POST /leads` | `leads:write` | Create (only `title` required; owner defaults to the caller) |
+| `PATCH /leads/{id}` | `leads:write` | Update (only what you send; `null` clears an optional field) |
 | `POST /notes` | `notes:write` | Add a note to a contact, company or deal (exactly one of `contactId`, `companyId`, `dealId`) |
 | `PATCH /notes/{id}` | `notes:write` | Edit a note (author only) |
 | `DELETE /notes/{id}` | `notes:delete`, or your own | Delete a note |

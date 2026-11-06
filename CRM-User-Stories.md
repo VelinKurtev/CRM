@@ -129,8 +129,9 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
 
 ## Phase 4 – Leads & Deal Pipelines
 
-- [ ] **US-026 – Create and edit lead**
+- [x] **US-026 – Create and edit lead**
   As a Sales user, I want to create a lead with source, value, owner, priority, status and notes, so that potential customers are tracked.
+  - [x] Only the title is required; a new lead is New, medium priority and owned by whoever creates it.
 
 - [ ] **US-027 – Lead pipeline stages**
   As a Sales user, I want leads to move through New Lead → Contacted → Qualified → Proposal Sent → Negotiation → Won/Lost, so that progress is visible.

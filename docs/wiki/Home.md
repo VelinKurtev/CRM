@@ -20,6 +20,7 @@ A customer relationship manager: contacts, companies, leads, deals, tasks and re
 - App layout and the dashboard: [[Dashboard]]
 - Contacts: create, edit, delete, search, import and export: [[Contacts]]
 - Companies: create, edit, search: [[Companies]]
+- Leads: create, edit, search, filter: [[Leads]]
 - Notes on contacts, companies and deals: [[Notes]]
 - Running it safely: [[Security and Operations]]
 - Every endpoint: [[API Reference]]

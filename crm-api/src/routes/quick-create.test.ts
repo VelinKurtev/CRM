@@ -66,7 +66,7 @@ describe('quick-create endpoints', () => {
   it('creates a lead as NEW, owned by me', async () => {
     const res = await post('sales', '/api/leads', { title: `qc-${stamp}-lead`, source: 'Web' })
     expect(res.status).toBe(201)
-    expect(res.body.lead).toMatchObject({ status: 'NEW', source: 'Web', ownerId: ids.sales })
+    expect(res.body.lead).toMatchObject({ status: 'NEW', source: 'Web', owner: { id: ids.sales } })
   })
 
   it('creates an open deal in the first stage of a pipeline', async () => {

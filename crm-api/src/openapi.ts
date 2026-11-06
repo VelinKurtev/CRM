@@ -910,29 +910,109 @@ export const openapi = {
     '/leads': {
       post: {
         tags: ['Records'],
-        summary: 'Create lead',
-        description: 'Quick-create with the essential fields only. Requires `leads:write`.',
+        summary: 'Create a lead',
+        description:
+          'Requires `leads:write`. Only `title` is required. A new lead is `NEW` with `MEDIUM` priority and is owned by the caller unless `ownerId` names another active user. `value` is the estimated worth, up to two decimals.',
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
           content: {
             'application/json': {
-              schema: {
-                type: 'object',
-                required: ['title'],
-                properties: {
-                  title: { type: 'string' },
-                  source: { type: 'string' },
-                },
+              schema: { $ref: '#/components/schemas/LeadInput' },
+              example: {
+                title: 'Website redesign enquiry',
+                source: 'Trade show',
+                value: 15000,
+                priority: 'HIGH',
+                notes: 'Wants a demo next week',
               },
             },
           },
         },
         responses: {
-          '201': { description: 'Created' },
+          '201': { description: '`{ lead }`' },
           '400': { description: 'Validation failed' },
           '401': { $ref: '#/components/responses/Unauthorized' },
           '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+      get: {
+        tags: ['Records'],
+        summary: 'List leads',
+        description:
+          'Requires `leads:read`. Newest first. `q` matches title or source. Paged (default 20, up to 100).',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'q', in: 'query', schema: { type: 'string' } },
+          {
+            name: 'status',
+            in: 'query',
+            schema: {
+              type: 'string',
+              enum: ['NEW', 'CONTACTED', 'QUALIFIED', 'UNQUALIFIED', 'CONVERTED'],
+            },
+          },
+          {
+            name: 'priority',
+            in: 'query',
+            schema: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'] },
+          },
+          { name: 'page', in: 'query', schema: { type: 'integer', default: 1 } },
+          { name: 'pageSize', in: 'query', schema: { type: 'integer', default: 20, maximum: 100 } },
+        ],
+        responses: {
+          '200': { description: '`{ leads, total, page, pageSize }`' },
+          '400': { description: 'Invalid query' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/leads/owners': {
+      get: {
+        tags: ['Records'],
+        summary: 'Users a lead can be assigned to',
+        description:
+          'Requires `leads:write`. Active users, by name: `{ owners: [{ id, firstName, lastName }] }`.',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: '`{ owners }`' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/leads/{id}': {
+      get: {
+        tags: ['Records'],
+        summary: 'Get a lead',
+        description: 'Requires `leads:read`.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': { description: '`{ lead }`' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Lead not found' },
+        },
+      },
+      patch: {
+        tags: ['Records'],
+        summary: 'Edit a lead',
+        description:
+          'Requires `leads:write`. Send only what changes: a field left out is kept, `null` clears `source`, `value`, `notes` or `ownerId`. The title cannot be cleared. `ownerId` must be an active user.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/LeadInput' } } },
+        },
+        responses: {
+          '200': { description: '`{ lead }`' },
+          '400': { description: 'Validation failed' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Lead not found' },
         },
       },
     },
@@ -1184,6 +1264,28 @@ export const openapi = {
       },
     },
     schemas: {
+      LeadInput: {
+        type: 'object',
+        required: ['title'],
+        properties: {
+          title: { type: 'string', maxLength: 200 },
+          source: { type: 'string', maxLength: 100, nullable: true },
+          value: {
+            type: 'number',
+            minimum: 0,
+            nullable: true,
+            description: 'Estimated, 2 decimals',
+          },
+          priority: { type: 'string', enum: ['LOW', 'MEDIUM', 'HIGH'], default: 'MEDIUM' },
+          status: {
+            type: 'string',
+            enum: ['NEW', 'CONTACTED', 'QUALIFIED', 'UNQUALIFIED', 'CONVERTED'],
+            default: 'NEW',
+          },
+          notes: { type: 'string', maxLength: 5000, nullable: true },
+          ownerId: { type: 'string', nullable: true },
+        },
+      },
       CompanyInput: {
         type: 'object',
         properties: {
