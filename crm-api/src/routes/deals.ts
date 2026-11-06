@@ -122,6 +122,68 @@ dealsRouter.get('/pipelines', requirePermission('deals:read'), async (_req, res)
   res.json({ pipelines })
 })
 
+// ───────── Board ─────────
+
+/** Each board column shows this many deals, most recently changed first; the count says how many there are. */
+export const BOARD_COLUMN_LIMIT = 50
+
+/**
+ * One pipeline as a board: every stage in order with how many deals are in it, their total value,
+ * and the most recently changed ones. Won and lost deals are in their stages' columns too.
+ */
+dealsRouter.get('/pipelines/:id/board', requirePermission('deals:read'), async (req, res) => {
+  const pipelineId = idOf(req)
+  const pipeline = await prisma.pipeline.findUnique({
+    where: { id: pipelineId },
+    select: {
+      id: true,
+      name: true,
+      stages: {
+        orderBy: { position: 'asc' },
+        select: {
+          id: true,
+          name: true,
+          position: true,
+          probability: true,
+          isWon: true,
+          isLost: true,
+        },
+      },
+    },
+  })
+  if (!pipeline) throw new HttpError(404, 'Pipeline not found')
+
+  const [totals, columns] = await Promise.all([
+    prisma.deal.groupBy({
+      by: ['stageId'],
+      where: { pipelineId },
+      _count: true,
+      _sum: { amount: true },
+    }),
+    Promise.all(
+      pipeline.stages.map((stage) =>
+        prisma.deal.findMany({
+          where: { stageId: stage.id },
+          orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }],
+          take: BOARD_COLUMN_LIMIT,
+          select: dealSelect,
+        }),
+      ),
+    ),
+  ])
+  const totalOf = new Map(totals.map((t) => [t.stageId, t]))
+
+  res.json({
+    pipeline: { id: pipeline.id, name: pipeline.name },
+    stages: pipeline.stages.map((stage, i) => ({
+      ...stage,
+      count: totalOf.get(stage.id)?._count ?? 0,
+      value: Number(totalOf.get(stage.id)?._sum.amount ?? 0),
+      deals: columns[i].map(present),
+    })),
+  })
+})
+
 // ───────── List ─────────
 
 const listQuery = z.object({

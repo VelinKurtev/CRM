@@ -23,6 +23,7 @@ import { usePermission } from '@/hooks/use-permission'
 import { listDeals, type DealStatus } from '@/services/deals'
 import { formatCalendarDate } from '@/utils/format-date'
 import { STATUS_LABELS } from './schemas'
+import { ViewToggle } from './view-toggle'
 
 const PAGE_SIZE = 20
 
@@ -89,7 +90,10 @@ export function DealsPage() {
             </p>
           )}
         </div>
-        {newButton}
+        <div className="flex flex-wrap items-center gap-2">
+          <ViewToggle />
+          {newButton}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">

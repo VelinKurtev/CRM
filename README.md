@@ -136,7 +136,10 @@ won or lost). Sales users and above can add and edit them: name (required), comp
 value in USD, stage, expected closing date and probability of winning. A new deal starts in the first stage of the
 default pipeline, with that stage's probability; change the stage and the probability follows, and you can still
 override it. Moving a deal to a *won* or *lost* stage closes it (probability 100% or 0%), and moving it back reopens it.
-The deal board with drag-and-drop comes with the next stories.
+
+On the **Board** view (the **List | Board** switch at the top of Deals) every stage is a column showing how many deals
+are in it and their total value. Drag a card to another column, or pick a stage from the menu on the card, to change
+its stage; the move shows at once and the card jumps back if the server refuses it. Won and lost deals have columns too.
 
 ## Wiki
 

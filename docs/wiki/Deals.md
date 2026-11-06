@@ -34,7 +34,24 @@ and date; open it from **Deals** to fill in the rest.
 Stages and pipelines are set up by admins in a later story; until then the standard pipeline is created the first time
 it is needed (Qualification, Proposal, Negotiation, Closed won, Closed lost).
 
+## The board
+
+**Deals → Board** (the **List | Board** switch at the top of the page) shows the pipeline as a Kanban board: a column
+per stage in order, each headed by its name, how many deals are in it and their total value. A card shows the deal's
+name (a link to edit it), its company or contact, value, probability and expected closing date.
+
+- **Drag a card** to another column to move the deal to that stage. The card appears in its new column straight away; if
+  the server refuses the move it jumps back and a message says why.
+- **Or use the menu** on the card ("Move … to"). It does the same thing and works with a keyboard, a screen reader or a
+  touch screen. To drag with the keyboard instead, focus the grip button on a card, press Space, use the arrow keys and
+  press Space again to drop (Escape cancels).
+- Moving a card is the same as changing the stage on the edit form, so the rules in *Stages, status and probability*
+  above apply: dropping a deal in a won or lost column closes it, and dragging it back out reopens it.
+- Each column shows the 50 most recently changed deals and says "Showing the latest 50 of N" when there are more.
+  Won and lost columns collect these over time, so use the list (with its search and status filter) to find old ones.
+- With more than one pipeline, a **Pipeline** menu at the top chooses which board to show.
+- Read-only roles see the board but cannot drag or move cards.
+
 ## Not here yet
 
-The board with drag-and-drop between stages, converting a lead into a deal and managing pipelines come with their own
-stories.
+Converting a lead into a deal and managing pipelines come with their own stories.

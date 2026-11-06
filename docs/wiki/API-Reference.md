@@ -55,6 +55,7 @@ Swagger UI at **http://localhost:4000/api/docs**; the raw spec is at `/api/opena
 | `POST /companies` | `companies:write` | Create (only `name` required; names unique ignoring case) |
 | `PATCH /companies/{id}` | `companies:write` | Update (only what you send; `null` clears an optional field) |
 | `GET /pipelines` | `deals:read` | Pipelines with their stages in order, default first |
+| `GET /pipelines/{id}/board` | `deals:read` | A pipeline as a board: each stage with its deal count, total value and its 50 most recently changed deals. A card is moved with `PATCH /deals/{id}` and a new `stageId` |
 | `GET /deals` | `deals:read` | Deals newest first (search `q` on name or company, filter `status`, paging) |
 | `GET /deals/{id}` | `deals:read` | One deal |
 | `POST /deals` | `deals:write` | Create (only `title` required; starts in the default pipeline's first stage unless `stageId` is given) |

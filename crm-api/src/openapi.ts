@@ -1196,6 +1196,25 @@ export const openapi = {
         },
       },
     },
+    '/pipelines/{id}/board': {
+      get: {
+        tags: ['Records'],
+        summary: 'A pipeline as a board',
+        description:
+          'Requires `deals:read`. Every stage in order with `count` and total `value` of all its deals, and its 50 most recently changed `deals` (won and lost deals sit in their stages’ columns). To move a card, `PATCH /deals/{id}` with a new `stageId`.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description:
+              '`{ pipeline: { id, name }, stages: [{ ...stage, count, value, deals }] }`',
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Pipeline not found' },
+        },
+      },
+    },
     '/pipelines': {
       get: {
         tags: ['Records'],

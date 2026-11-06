@@ -5,6 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { app } from '../app.js'
 import { syncPermissions } from '../lib/permissions.js'
 import { prisma } from '../lib/prisma.js'
+import { BOARD_COLUMN_LIMIT } from './deals.js'
 
 const stamp = Date.now()
 const password = 'Secret123!'
@@ -320,5 +321,81 @@ describe('reading deals', () => {
     const defaults = res.body.pipelines.map((p: { isDefault: boolean }) => p.isDefault)
     expect(defaults).toEqual([...defaults].sort((x, y) => Number(y) - Number(x)))
     expect((await request(app).get('/api/pipelines')).status).toBe(401)
+  })
+})
+
+describe('GET /api/pipelines/:id/board', () => {
+  const board = (who: Who, id = pipelineId) =>
+    request(app).get(`/api/pipelines/${id}/board`).set(as(who))
+
+  it('needs login and deals:read, and a pipeline that exists', async () => {
+    expect((await request(app).get(`/api/pipelines/${pipelineId}/board`)).status).toBe(401)
+    expect((await board('sales', 'missing')).status).toBe(404)
+    expect((await board('support')).status).toBe(200)
+  })
+
+  it('has a column per stage, in order, with counts, totals and deals', async () => {
+    const q = `Board${stamp}`
+    await make({ title: `${q} a`, amount: 100, stageId: stage.lead })
+    await make({ title: `${q} b`, amount: 250.5, stageId: stage.lead })
+    await make({ title: `${q} c`, amount: 40, stageId: stage.won })
+    const res = await board('sales')
+    expect(res.status).toBe(200)
+    expect(res.body.pipeline).toEqual({ id: pipelineId, name: `dl-${stamp}` })
+    expect(res.body.stages.map((s: { name: string }) => s.name)).toEqual([
+      'Lead in',
+      'Pitch',
+      'Closed won',
+      'Closed lost',
+    ])
+    const [lead, pitch, won, lost] = res.body.stages
+    expect(lead).toMatchObject({ id: stage.lead, probability: 10, isWon: false })
+    expect(lead.deals.filter((d: { title: string }) => d.title.startsWith(q))).toHaveLength(2)
+    expect(lead.count).toBeGreaterThanOrEqual(2)
+    expect(won).toMatchObject({ isWon: true })
+    expect(won.deals.map((d: { title: string }) => d.title)).toContain(`${q} c`)
+    expect(won.deals.find((d: { title: string }) => d.title === `${q} c`)).toMatchObject({
+      status: 'WON',
+      amount: 40,
+    })
+    // An empty column is still there, with zeros.
+    expect(lost.deals.length).toBe(lost.count)
+    expect(pitch.count).toBe(pitch.deals.length)
+    // Totals cover every deal in the stage: lead's value is the sum of what it holds.
+    const sum = (lead.deals as { amount: number }[]).reduce((n, d) => n + d.amount, 0)
+    expect(lead.value).toBeCloseTo(sum, 2)
+  })
+
+  it('keeps other pipelines’ deals out, and moves a card when its stage changes', async () => {
+    const { id } = await make({ title: `Mover ${stamp}`, stageId: stage.lead })
+    expect((await patch('sales', id, { stageId: stage.pitch })).status).toBe(200)
+    const res = await board('sales')
+    const names = (i: number) => res.body.stages[i].deals.map((d: { id: string }) => d.id)
+    expect(names(0)).not.toContain(id)
+    expect(names(1)).toContain(id)
+    const other = await board(
+      'sales',
+      (await prisma.stage.findUniqueOrThrow({ where: { id: otherPipelineStage } })).pipelineId,
+    )
+    expect(other.body.stages).toHaveLength(1)
+    expect(other.body.stages[0].deals.map((d: { id: string }) => d.id)).not.toContain(id)
+  })
+
+  it('shows the most recently changed deals first, and only the first column-full', async () => {
+    await prisma.deal.createMany({
+      data: Array.from({ length: BOARD_COLUMN_LIMIT + 1 }, (_, i) => ({
+        title: `Many ${stamp} ${i}`,
+        pipelineId,
+        stageId: stage.lost,
+        status: 'LOST' as const,
+        closedAt: new Date(),
+      })),
+    })
+    const res = await board('sales')
+    const lost = res.body.stages[3]
+    expect(lost.deals).toHaveLength(BOARD_COLUMN_LIMIT)
+    expect(lost.count).toBeGreaterThan(BOARD_COLUMN_LIMIT)
+    const times = lost.deals.map((d: { updatedAt: string }) => d.updatedAt)
+    expect([...times].sort().reverse()).toEqual(times)
   })
 })

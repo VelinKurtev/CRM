@@ -151,8 +151,9 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
   - [x] Only the name is required; the probability starts from the chosen stage's and can be changed.
   - [x] Moving a deal to a won or lost stage closes it (probability 100 or 0); moving it back reopens it.
 
-- [ ] **US-031 – Deal Kanban board**
+- [x] **US-031 – Deal Kanban board**
   As a Sales user, I want a Kanban board with drag-and-drop between stages, so that I can update deals quickly.
+  - [x] Drag a card to another column, or use the menu on the card (also for keyboard and touch); the move shows at once and is undone if refused.
 
 - [ ] **US-032 – Convert lead to deal**
   As a Sales user, I want to convert a qualified lead into a deal, so that I don't re-enter data.

@@ -78,3 +78,21 @@ export const updateDeal = (id: string, body: DealUpdate) =>
 /** The default pipeline first, each with its stages in order. */
 export const listPipelines = () =>
   api.get<{ pipelines: Pipeline[] }>('/pipelines').then((r) => r.data.pipelines)
+
+/** One column of the board: a stage, how many deals are in it in all, and the newest few. */
+export type BoardStage = PipelineStage & {
+  /** Deals in the stage, in all. `deals` may hold fewer. */
+  count: number
+  /** Their total value. */
+  value: number
+  deals: Deal[]
+}
+
+export type Board = { pipeline: { id: string; name: string }; stages: BoardStage[] }
+
+export const getBoard = (pipelineId: string) =>
+  api.get<Board>(`/pipelines/${pipelineId}/board`).then((r) => r.data)
+
+/** Move a deal to another stage of its pipeline, which also opens or closes it. */
+export const moveDeal = (id: string, stageId: string) =>
+  api.patch<{ deal: Deal }>(`/deals/${id}`, { stageId }).then((r) => r.data.deal)

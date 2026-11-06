@@ -5,6 +5,7 @@ import { CompaniesPage } from '@/features/companies/companies-page'
 import { CompanyDetailPage } from '@/features/companies/company-detail-page'
 import { EditCompanyPage } from '@/features/companies/edit-company-page'
 import { NewCompanyPage } from '@/features/companies/new-company-page'
+import { DealBoardPage } from '@/features/deals/deal-board-page'
 import { DealsPage } from '@/features/deals/deals-page'
 import { EditDealPage } from '@/features/deals/edit-deal-page'
 import { NewDealPage } from '@/features/deals/new-deal-page'
@@ -120,6 +121,7 @@ export const routes = [
                 handle: { crumb: 'Deals' },
                 children: [
                   { index: true, element: <DealsPage /> },
+                  { path: 'board', element: <DealBoardPage />, handle: { crumb: 'Board' } },
                   {
                     element: <RequirePermission permission="deals:write" />,
                     children: [
