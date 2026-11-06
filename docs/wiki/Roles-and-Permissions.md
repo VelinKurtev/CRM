@@ -18,7 +18,7 @@ single source of truth is `crm-api/src/lib/permissions.ts`, which is synced to t
 | `reports` | read | read | — | — |
 | `users` | read, manage | read | — | — |
 | `audit` | read | — | — | — |
-| `settings` | manage | — | — | — |
+| `settings` | manage (pipelines and stages) | — | — | — |
 
 Notes: `contacts:delete_own` lets a person delete contacts they own (Admins and Managers already have `delete` for any).
 `leads:assign` chooses or changes a lead's owner; Sales own the leads they create but cannot hand them out.

@@ -19,6 +19,7 @@ import { tagsRouter } from './routes/tags.js'
 import { dealsRouter } from './routes/deals.js'
 import { leadAttachmentsRouter } from './routes/lead-attachments.js'
 import { leadConvertRouter } from './routes/lead-convert.js'
+import { pipelinesRouter } from './routes/pipelines.js'
 import { leadsRouter } from './routes/leads.js'
 import { notesRouter } from './routes/notes.js'
 import { quickCreateRouter } from './routes/quick-create.js'
@@ -66,6 +67,7 @@ app.use('/api', contactsExportRouter)
 app.use('/api', contactsImportRouter)
 app.use('/api', contactsRouter)
 app.use('/api', companiesRouter)
+app.use('/api', pipelinesRouter)
 app.use('/api', dealsRouter)
 app.use('/api', leadConvertRouter)
 app.use('/api', leadsRouter)

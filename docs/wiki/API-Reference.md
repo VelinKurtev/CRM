@@ -54,7 +54,14 @@ Swagger UI at **http://localhost:4000/api/docs**; the raw spec is at `/api/opena
 | `GET /companies/{id}/overview` | `companies:read` | The company with its contacts, deals and notes (first 50 of each; a section you may not read is `null`) |
 | `POST /companies` | `companies:write` | Create (only `name` required; names unique ignoring case) |
 | `PATCH /companies/{id}` | `companies:write` | Update (only what you send; `null` clears an optional field) |
-| `GET /pipelines` | `deals:read` | Pipelines with their stages in order, default first |
+| `GET /pipelines` | `deals:read` | Pipelines with their stages in order, default first, with how many deals each stage and pipeline holds |
+| `POST /pipelines` | `settings:manage` | Create a pipeline (starts with the standard stages) |
+| `PATCH /pipelines/{id}` | `settings:manage` | Rename, or `isDefault: true` to make it the default |
+| `DELETE /pipelines/{id}` | `settings:manage` | Delete (not the default, not one with deals) |
+| `POST /pipelines/{id}/stages` | `settings:manage` | Add a stage (`kind` open, won or lost; `probability`; optional `position`) |
+| `PATCH /pipelines/{id}/stages/{stageId}` | `settings:manage` | Rename, change probability or `kind`; a kind change updates the stage's deals |
+| `PUT /pipelines/{id}/stages/order` | `settings:manage` | Put the stages in order: every id, once |
+| `DELETE /pipelines/{id}/stages/{stageId}` | `settings:manage` | Delete a stage; `?moveDealsTo=` is needed if it holds deals |
 | `GET /pipelines/{id}/board` | `deals:read` | A pipeline as a board: each stage with its deal count, total value and its 50 most recently changed deals. A card is moved with `PATCH /deals/{id}` and a new `stageId` |
 | `GET /deals` | `deals:read` | Deals newest first (search `q` on name or company, filter `status`, paging) |
 | `GET /deals/{id}` | `deals:read` | One deal |

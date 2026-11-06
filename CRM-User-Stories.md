@@ -159,8 +159,10 @@ Stories are numbered consecutively (US-001 …) and ordered by the recommended d
   As a Sales user, I want to convert a qualified lead into a deal, so that I don't re-enter data.
   - [x] The deal starts from the lead's name, value, contact and owner; its notes and tags come across; the lead is marked Won and linked to the deal, and cannot be converted twice.
 
-- [ ] **US-033 – Manage pipelines and stages**
+- [x] **US-033 – Manage pipelines and stages**
   As an Admin, I want to configure pipelines and stages, so that the process matches our business.
+  - [x] Create, rename, delete and choose the default pipeline; add, rename, reorder and delete stages; set each stage's probability and whether it is open, won or lost.
+  - [x] A stage with deals is only deleted once they are moved; changing a stage between open, won and lost updates its deals.
 
 ---
 

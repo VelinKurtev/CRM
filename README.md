@@ -147,6 +147,15 @@ On the **Board** view (the **List | Board** switch at the top of Deals) every st
 are in it and their total value. Drag a card to another column, or pick a stage from the menu on the card, to change
 its stage; the move shows at once and the card jumps back if the server refuses it. Won and lost deals have columns too.
 
+## Pipelines
+
+Admins get **Pipelines** in the sidebar to set up the stages deals move through. Pick a pipeline, then add, rename,
+reorder (the arrows), edit or delete its stages. Each stage has a probability and is *open*, *won* or *lost* (won is
+always 100% and lost 0%); the first stage must be open, because new deals start there. A new pipeline starts with the
+standard stages, and one pipeline is the **default**, which new deals use. A stage that holds deals can only be deleted
+once you choose where they move to, and changing a stage between open, won and lost updates the deals in it. A pipeline
+with deals, or the default one, cannot be deleted.
+
 ## Wiki
 
 The project wiki is written in `docs/wiki/` (reviewed with the code). A workflow (`.github/workflows/wiki.yml`)

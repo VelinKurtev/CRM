@@ -25,6 +25,7 @@ export const openapi = {
     { name: 'Users' },
     { name: 'Dashboard' },
     { name: 'Records' },
+    { name: 'Pipelines', description: 'Deal pipelines and their stages (admins change them).' },
   ],
   paths: {
     '/health': {
@@ -1244,15 +1245,184 @@ export const openapi = {
     },
     '/pipelines': {
       get: {
-        tags: ['Records'],
+        tags: ['Pipelines'],
         summary: 'List pipelines and their stages',
         description:
-          'Requires `deals:read`. The default pipeline first, each with its stages in order (`id`, `name`, `position`, `probability`, `isWon`, `isLost`). A database with no pipeline gets the standard one.',
+          'Requires `deals:read`. The default pipeline first, each with its stages in order (`id`, `name`, `position`, `probability`, `isWon`, `isLost`, `dealCount`) and its total `dealCount`. A database with no pipeline gets the standard one.',
         security: [{ bearerAuth: [] }],
         responses: {
           '200': { description: '`{ pipelines }`' },
           '401': { $ref: '#/components/responses/Unauthorized' },
           '403': { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+      post: {
+        tags: ['Pipelines'],
+        summary: 'Create a pipeline',
+        description:
+          'Requires `settings:manage` (admins). Starts with the standard stages (Qualification, Proposal, Negotiation, Closed won, Closed lost), which can then be changed. Not the default. Names are unique whatever their letter case (409). Returns `{ pipeline }`.',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['name'],
+                properties: { name: { type: 'string', maxLength: 100 } },
+              },
+            },
+          },
+        },
+        responses: {
+          '201': { description: '`{ pipeline }`' },
+          '400': { description: 'Validation failed' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '409': { description: 'A pipeline with this name exists' },
+        },
+      },
+    },
+    '/pipelines/{id}': {
+      patch: {
+        tags: ['Pipelines'],
+        summary: 'Rename a pipeline or make it the default',
+        description:
+          'Requires `settings:manage`. `name` renames it; `isDefault: true` makes it the default (new deals start in its first stage) and the previous default stops being one. `isDefault: false` is refused: another pipeline has to become the default.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  isDefault: { type: 'boolean', enum: [true] },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: '`{ pipeline }`' },
+          '400': { description: 'Validation failed' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Pipeline not found' },
+          '409': { description: 'A pipeline with this name exists' },
+        },
+      },
+      delete: {
+        tags: ['Pipelines'],
+        summary: 'Delete a pipeline',
+        description:
+          'Requires `settings:manage`. Refused (409) for the default pipeline and for one that has deals.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '204': { description: 'Deleted' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Pipeline not found' },
+          '409': { description: 'It is the default, or has deals' },
+        },
+      },
+    },
+    '/pipelines/{id}/stages': {
+      post: {
+        tags: ['Pipelines'],
+        summary: 'Add a stage',
+        description:
+          'Requires `settings:manage`. `kind` is `open` (default), `won` or `lost`; won is always 100% and lost 0%. Without `position` an open stage goes before the closed ones and a closed stage goes last. The first stage must be open (400). Names are unique within the pipeline (409). Returns `{ pipeline }`.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/StageInput' } } },
+        },
+        responses: {
+          '201': { description: '`{ pipeline }`' },
+          '400': { description: 'Validation failed' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Pipeline not found' },
+          '409': { description: 'The pipeline already has a stage with this name' },
+        },
+      },
+    },
+    '/pipelines/{id}/stages/order': {
+      put: {
+        tags: ['Pipelines'],
+        summary: 'Put the stages in order',
+        description:
+          'Requires `settings:manage`. Send every stage’s id exactly once, in the order they should be in. The first must be an open stage. Returns `{ pipeline }`.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['stageIds'],
+                properties: { stageIds: { type: 'array', items: { type: 'string' } } },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: '`{ pipeline }`' },
+          '400': { description: 'Not every stage exactly once, or a closed stage first' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Pipeline not found' },
+        },
+      },
+    },
+    '/pipelines/{id}/stages/{stageId}': {
+      patch: {
+        tags: ['Pipelines'],
+        summary: 'Change a stage',
+        description:
+          'Requires `settings:manage`. Send only what changes. Changing `kind` also updates the deals already in the stage: into won or lost they close (keeping a closing date they already have), back to open they reopen. A stage reopened without a `probability` gets 50. The first stage cannot become won or lost (400).',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'stageId', in: 'path', required: true, schema: { type: 'string' } },
+        ],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/StageInput' } } },
+        },
+        responses: {
+          '200': { description: '`{ pipeline }`' },
+          '400': { description: 'Validation failed' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Stage not found' },
+          '409': { description: 'The pipeline already has a stage with this name' },
+        },
+      },
+      delete: {
+        tags: ['Pipelines'],
+        summary: 'Delete a stage',
+        description:
+          'Requires `settings:manage`. A stage that holds deals needs `moveDealsTo`, another stage of the same pipeline: the deals go there and become open, won or lost as that stage is. Refused (409) if it would leave the pipeline with no stage or no open stage first, or if deals need moving and no target is given.',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'stageId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'moveDealsTo', in: 'query', schema: { type: 'string' } },
+        ],
+        responses: {
+          '204': { description: 'Deleted' },
+          '400': { description: '`moveDealsTo` is not another stage of this pipeline' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { description: 'Stage not found' },
+          '409': { description: 'Deals need moving, or the pipeline would be left unusable' },
         },
       },
     },
@@ -1473,6 +1643,19 @@ export const openapi = {
       },
     },
     schemas: {
+      StageInput: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', maxLength: 100 },
+          probability: { type: 'integer', minimum: 0, maximum: 100 },
+          kind: { type: 'string', enum: ['open', 'won', 'lost'], default: 'open' },
+          position: {
+            type: 'integer',
+            minimum: 1,
+            description: 'When adding: where it goes, counting from 1',
+          },
+        },
+      },
       DealInput: {
         type: 'object',
         required: ['title'],

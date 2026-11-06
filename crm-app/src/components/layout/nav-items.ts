@@ -7,6 +7,7 @@ import {
   Target,
   UserRound,
   Users,
+  Workflow,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -27,5 +28,6 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Leads', to: '/leads', icon: Target, permission: 'leads:read' },
   { label: 'Tags', to: '/tags', icon: Tag, permission: 'tags:manage' },
   { label: 'My profile', to: '/profile', icon: UserRound },
+  { label: 'Pipelines', to: '/admin/pipelines', icon: Workflow, permission: 'settings:manage' },
   { label: 'Users & roles', to: '/admin/users', icon: ShieldCheck, permission: 'users:manage' },
 ]

@@ -19,6 +19,7 @@ import { ImportContactsPage } from '@/features/contacts/import-contacts-page'
 import { EditContactPage } from '@/features/contacts/edit-contact-page'
 import { NewContactPage } from '@/features/contacts/new-contact-page'
 import { TagsPage } from '@/features/tags/tags-page'
+import { PipelinesPage } from '@/features/admin/pipelines/pipelines-page'
 import { UsersPage } from '@/features/admin/users-page'
 import { ForgotPasswordPage } from '@/features/auth/forgot-password-page'
 import { LoginPage } from '@/features/auth/login-page'
@@ -185,6 +186,16 @@ export const routes = [
                   { index: true, element: <Navigate to="/admin/users" replace /> },
                   { path: 'users', element: <UsersPage />, handle: { crumb: 'Users & roles' } },
                 ],
+              },
+            ],
+          },
+          {
+            element: <RequirePermission permission="settings:manage" />,
+            children: [
+              {
+                path: '/admin/pipelines',
+                element: <PipelinesPage />,
+                handle: { crumb: 'Pipelines' },
               },
             ],
           },

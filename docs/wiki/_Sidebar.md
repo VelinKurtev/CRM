@@ -6,6 +6,7 @@
 - [[Companies]]
 - [[Leads]]
 - [[Deals]]
+- [[Pipelines]]
 - [[Notes]]
 - [[Dashboard]]
 - [[Roles and Permissions]]

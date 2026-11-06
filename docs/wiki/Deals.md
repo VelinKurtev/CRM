@@ -31,8 +31,8 @@ and date; open it from **Deals** to fill in the rest.
   that stage's probability.
 - A deal can only move between the stages of **its own pipeline**.
 
-Stages and pipelines are set up by admins in a later story; until then the standard pipeline is created the first time
-it is needed (Qualification, Proposal, Negotiation, Closed won, Closed lost).
+Admins set up the pipelines and their stages: see [[Pipelines]]. Until they do, the standard pipeline is created the first
+time it is needed (Qualification, Proposal, Negotiation, Closed won, Closed lost).
 
 ## The board
 
@@ -54,5 +54,4 @@ name (a link to edit it), its company or contact, value, probability and expecte
 
 ## Not here yet
 
-Managing pipelines and stages comes with its own story. Deals can also come from leads: see *Converting a lead into a
-deal* on the [[Leads]] page.
+Deals can also come from leads: see *Converting a lead into a deal* on the [[Leads]] page.

@@ -1,7 +1,6 @@
 import { Router } from 'express'
 import { z } from 'zod'
 
-import { ensureFirstDealStage } from '../lib/default-pipeline.js'
 import {
   amount,
   assertCustomer,
@@ -66,36 +65,6 @@ const present = ({ amount, ...deal }: NonNullable<Row>) => ({ ...deal, amount: N
 
 /** A deal as the API shows it. */
 export const loadDeal = async (dealId: string) => present((await findOne(dealId))!)
-
-// ───────── Pipelines ─────────
-
-/**
- * The pipelines and their stages in order, the default one first, for choosing a deal's stage.
- * A database with no pipeline yet gets the standard one, the same as when the first deal is added.
- */
-dealsRouter.get('/pipelines', requirePermission('deals:read'), async (_req, res) => {
-  await ensureFirstDealStage(prisma)
-  const pipelines = await prisma.pipeline.findMany({
-    orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }, { id: 'asc' }],
-    select: {
-      id: true,
-      name: true,
-      isDefault: true,
-      stages: {
-        orderBy: { position: 'asc' },
-        select: {
-          id: true,
-          name: true,
-          position: true,
-          probability: true,
-          isWon: true,
-          isLost: true,
-        },
-      },
-    },
-  })
-  res.json({ pipelines })
-})
 
 // ───────── Board ─────────
 
